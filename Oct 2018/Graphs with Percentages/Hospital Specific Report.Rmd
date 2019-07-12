@@ -1,0 +1,681 @@
+---
+output:
+  html_document:
+    theme: cosmo
+always_allow_html: yes
+bibliography: bibliography.bib
+nocite: | 
+  @author1, @author2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 6, fig.asp = 0.618, out.width = "80%", fig.align = "center", dev='svg', fig.show='hold')
+```
+
+```{r initialize}
+hospital_names <- unique(giap$`Hospital.Name`)[!is.na(unique(giap$`Hospital.Name`))]
+
+id <- unique(giap$Hospital.Name[giap$Hospital.Name==name] %>% na.omit())
+```
+
+```{r, fig.align = "left", out.width='15%'}
+knitr::include_graphics("NICHE_logo.jpg")
+```
+
+
+<center>
+# **Nurses Improving Care for Healthsystem Elders**
+## **Geriatric Institutional Assessment Profile Report - Graph Data**
+### **October 2018 Cohort**
+</center>
+
+#### **`r name`**
+**GIAP Overview**
+
+The Geriatric Institutional Assessment Profile (GIAP) is a baseline assessment of nurses' knowledge, skills, attitudes and perceptions regarding care for older adults. The information generated from the GIAP is used to identify strengths and prioritize opportunities to improve nursing practice to support clinical excellence in the care of older adults.     
+
+The GIAP (v.8) provides clinical leaders with information about nurses' perceptions regarding:     
+
+* Knowledge to identify and manage the geriatric syndromes 
+* Availability of specialized resource to care for older adults
+* Age-friendly care planning and delivery 
+* Organizational values regarding care of older adults 
+* Unit environment to support NICHE program implementation
+  
+
+<center>
+#### **Nurse Characteristics**
+</center>
+
+**Participants:** The data included in this report were collected between `r lubridate::month(min(giap$startDate), label=T)`-`r lubridate::year(min(giap$startDate))` and `r lubridate::month(max(giap$startDate), label=T)`-`r lubridate::year(max(giap$startDate))`.  A total of `r nrow(giap %>% filter(Hospital.Name==name))` nurses at `r name` provided complete data for the questions included in this report. The demographic characteristics for the participating nursing staff from `r name` are summarized in the following tables.
+
+**This diagram depicts the extent to which the participating nurses are satisfied with their job.**
+
+<center>
+**Cohort**
+</center>
+
+```{r, fig.height=1, fig.width=9, fig.asp = .15, out.width = "95%"}
+cols <- c("Strongly Disagree" = "#AE6180",
+          "Disagree" = "#AE6180",
+          "Neither agree nor disagree" = "#A3A9AC", 
+          "Agree" = "#FFC842", 
+          "Strongly Agree" = "#6BAB8A")
+
+graph_data_score <- giap %>%
+  filter(!is.na(Q32), Q32!=9) %>%
+  rename(`Response` = Q32) %>%
+  count(`Response`) %>%
+  mutate(Percent = round(n / sum(n), 2),
+         Item = "I am satisfied with my current job",
+         Response_N = case_when(Response == 5 ~ "Disagree",
+                           Response == 4 ~ "Disagree",
+                           Response == 3 ~ "Neither agree nor disagree",
+                           Response == 2 ~ "Agree",
+                           Response == 1 ~ "Strongly Agree"),
+         Response_N = ordered(Response_N, levels = rev(c("Disagree",
+                                                     "Neither agree nor disagree",
+                                                     "Agree",
+                                                     "Strongly Agree"))),
+         Score = case_when(Response == 5 ~ 1,
+                           Response == 4 ~ 2,
+                           Response == 3 ~ 3,
+                           Response == 2 ~ 4,
+                           Response == 1 ~ 5),
+         Score = Score*n)
+
+graph_data <- aggregate(n ~ Response_N, FUN = sum, graph_data_score) %>% 
+  mutate(Item = "I am satisfied with my current job")
+  
+graph_data %>% 
+  ggplot(aes(x = (Item), y = n, fill = Response_N)) +
+  geom_bar(position = "fill", stat = "identity", width = .8, color = "white") +
+  geom_point(aes(x = (Item), y = sum(Score)/(5*(sum(n)))), 
+             shape = 8, 
+             size = 1.5, 
+             show.legend = FALSE, 
+             stroke = 0.5, 
+             data = graph_data_score) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", 
+        axis.ticks.y = element_blank(), 
+        panel.border = element_blank())
+```
+
+```{r}
+graph_data %>% 
+  select(Response_N, n) %>% 
+  mutate(n = round(n/sum(n),3)*100) %>% 
+  rename("Response" = "Response_N", "Percentage" = "n") %>% 
+  pander()
+```
+
+
+<center>
+**`r name`**
+</center>
+
+```{r, fig.height=1, fig.width=9, fig.asp = .15, out.width = "95%"}
+graph_data_score <- giap %>%
+  filter(!is.na(Q32), Q32!=9, Hospital.Name==name) %>%
+  rename(`Response` = Q32) %>%
+  count(`Response`) %>%
+  mutate(Percent = round(n / sum(n), 2),
+         Item = "I am satisfied with my current job",
+         Response_N = case_when(Response == 5 ~ "Disagree",
+                           Response == 4 ~ "Disagree",
+                           Response == 3 ~ "Neither agree nor disagree",
+                           Response == 2 ~ "Agree",
+                           Response == 1 ~ "Strongly Agree"),
+         Response_N = ordered(Response_N, levels = rev(c("Disagree",
+                                                     "Neither agree nor disagree",
+                                                     "Agree",
+                                                     "Strongly Agree"))),
+         Score = case_when(Response == 5 ~ 1,
+                           Response == 4 ~ 2,
+                           Response == 3 ~ 3,
+                           Response == 2 ~ 4,
+                           Response == 1 ~ 5),
+         Score = Score*n)
+
+graph_data <- aggregate(n ~ Response_N, FUN = sum, graph_data_score) %>% 
+  mutate(Item = "I am satisfied with my current job")
+  
+graph_data %>% 
+  ggplot(aes(x = (Item), y = n, fill = Response_N)) +
+  geom_bar(position = "fill", stat = "identity", width = .8, color = "white") +
+  geom_point(aes(x = (Item), y = sum(Score)/(5*(sum(n)))), 
+             shape = 8, 
+             size = 1.5, 
+             show.legend = FALSE, 
+             stroke = 0.5, 
+             data = graph_data_score) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", 
+        axis.ticks.y = element_blank(), 
+        panel.border = element_blank())
+```
+
+```{r}
+graph_data %>% 
+  select(Response_N, n) %>% 
+  mutate(n = round(n/sum(n),3)*100) %>% 
+  rename("Response" = "Response_N", "Percentage" = "n") %>% 
+  pander()
+```
+
+
+**This diagram depicts the extent to which the participating nurses find their work with older adults to be rewarding**
+
+<center>
+**Cohort**
+</center>
+
+```{r, fig.height=1, fig.width=9, fig.asp = .15, out.width = "95%"}
+wrap_35 <- wrap_format(35)
+
+cols <- c("Not rewarding" = "#AE6180",
+          "Neutral" = "#A3A9AC", 
+          "Somewhat rewarding" = "#FFC842", 
+          "Very rewarding" = "#6BAB8A")
+
+graph_data <- giap %>%
+  filter(!is.na(Q12), Q12 != 9) %>%
+  rename(`Response` = Q12) %>%
+  count(`Response`) %>%
+  mutate(Percent = round(n / sum(n), 2),
+         Item = "How rewarding is your work with older adults",
+         Response_N = case_when(Response == 4 ~ "Not rewarding",
+                           Response == 3 ~ "Neutral",
+                           Response == 2 ~ "Somewhat rewarding",
+                           Response == 1 ~ "Very rewarding"),
+         Response_N = ordered(Response_N, levels = rev(c("Not rewarding",
+                                                     "Neutral",
+                                                     "Somewhat rewarding",
+                                                     "Very rewarding"))),
+         Score = case_when(Response == 4 ~ 1,
+                           Response == 3 ~ 2,
+                           Response == 2 ~ 3,
+                           Response == 1 ~ 4),
+         Score = Score*n)
+
+graph_data %>% 
+  ggplot(aes(x = wrap_35(Item), y = n, fill = Response_N)) +
+  geom_bar(position = "fill", stat = "identity", width = .8, color = "white") +
+  geom_point(aes(x = wrap_35(Item), y = sum(Score)/(4*(sum(n)))), shape = 8, size = 1.5, show.legend = FALSE, stroke = 0.5 ) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", 
+        axis.ticks.y = element_blank(), 
+        panel.border = element_blank())
+```
+
+```{r}
+graph_data %>% 
+  select(Response_N, n) %>% 
+  mutate(n = round(n/sum(n),3)*100) %>% 
+  rename("Response" = "Response_N", "Percentage" = "n") %>% 
+  pander()
+```
+
+
+<center>
+**`r name`**
+</center>
+
+```{r, fig.height=1, fig.width=9, fig.asp = .15, out.width = "95%"}
+graph_data <- giap %>%
+  filter(!is.na(Q12), Q12 != 9, Hospital.Name==name) %>%
+  rename(`Response` = Q12) %>%
+  count(`Response`) %>%
+  mutate(Percent = round(n / sum(n), 2),
+         Item = "How rewarding is your work with older adults",
+         Response_N = case_when(Response == 4 ~ "Not rewarding",
+                           Response == 3 ~ "Neutral",
+                           Response == 2 ~ "Somewhat rewarding",
+                           Response == 1 ~ "Very rewarding"),
+         Response_N = ordered(Response_N, levels = rev(c("Not rewarding",
+                                                     "Neutral",
+                                                     "Somewhat rewarding",
+                                                     "Very rewarding"))),
+         Score = case_when(Response == 4 ~ 1,
+                           Response == 3 ~ 2,
+                           Response == 2 ~ 3,
+                           Response == 1 ~ 4),
+         Score = Score*n)
+
+graph_data %>% 
+  ggplot(aes(x = wrap_35(Item), y = n, fill = Response_N)) +
+  geom_bar(position = "fill", stat = "identity", width = .8, color = "white") +
+  geom_point(aes(x = wrap_35(Item), y = sum(Score)/(4*(sum(n)))), shape = 8, size = 1.5, show.legend = FALSE, stroke = 0.5 ) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", 
+        axis.ticks.y = element_blank(), 
+        panel.border = element_blank())
+```
+
+```{r}
+graph_data %>% 
+  select(Response_N, n) %>% 
+  mutate(n = round(n/sum(n),3)*100) %>% 
+  rename("Response" = "Response_N", "Percentage" = "n") %>% 
+  pander()
+```
+
+**This diagram depicts nurses' rating of organizational efforts to educate the workforce on the care of older adults.**
+
+<center>
+**Cohort Results**
+</center>
+
+```{r, fig.asp = .2, fig.width=14, out.width = "85%"}
+wrap_15 <- wrap_format(15)
+wrap_30 <- wrap_format(30)
+
+cols <- c("Strongly Disagree" = "#474C4F",
+          "Disagree" = "#AE6180", 
+          "Neither Agree nor Disagree" = "#A3A9AC", 
+          "Agree" = "#FFC842", 
+          "Strongly Agree" = "#6BAB8A")
+
+graph_data <- giap %>%
+  select(Hospital.Name, CASEID, Q17) %>%
+  gather(Item, Response, -Hospital.Name, -CASEID) %>% 
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Strongly Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Strongly Agree"),
+         Response = ordered(Response, levels = rev(c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree"))),
+         Item = case_when(Item == "Q17" ~ "Job your institution has done educating staff about the care of the older adult")) %>% 
+  count(Item, Response) %>%
+  mutate(Item = wrap_30(Item))
+
+graph_data %>% 
+  ggplot(aes(x = Item, y = n, fill = Response)) +
+  geom_bar(position = "fill", stat = "identity", width = .5, color = "white") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", 
+        text = element_text(size = 20, color = "black"), 
+        panel.border = element_blank())
+```
+
+```{r}
+graph_data %>% 
+  select(Response, n) %>% 
+  mutate(n = round(n/sum(n),3)*100) %>% 
+  rename("Percentage" = "n") %>% 
+  pander()
+```
+
+
+<center>
+**`r name` Results**
+</center>
+
+```{r, fig.asp = .2, fig.width=14, out.width = "85%"}
+graph_data <- giap %>%
+  filter(Hospital.Name == name) %>% 
+  select(Hospital.Name, CASEID, Q17) %>%
+  gather(Item, Response, -Hospital.Name, -CASEID) %>% 
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Strongly Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Strongly Agree"),
+         Response = ordered(Response, levels = rev(c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree"))),
+         Item = case_when(Item == "Q17" ~ "Job your institution has done educating staff about the care of the older adult")) %>% 
+  count(Item, Response) %>%
+  mutate(Item = wrap_30(Item))
+
+graph_data %>% 
+  ggplot(aes(x = Item, y = n, fill = Response)) +
+  geom_bar(position = "fill", stat = "identity", width = .5, color = "white") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", 
+        text = element_text(size = 20, color = "black"), 
+        panel.border = element_blank())
+```
+
+```{r}
+graph_data %>% 
+  select(Response, n) %>% 
+  mutate(n = round(n/sum(n),3)*100) %>% 
+  rename("Percentage" = "n") %>% 
+  pander()
+```
+
+**Practice Environment**
+
+This section of the GIAP focuses on nurses' perceptions of the nursing unit to support age-friendly care. A practice environment that supports the unique care needs of older adults is characterized by: 1) the availability of specialized equipment and professional expertise; 2) holistic and person-centered care planning and care delivery processes; and 3) organizational values that support age-friendly care by taking older adults' unique needs into account in the design and delivery of care. This section concludes with nurses' assessment of the time and priority that managers, and other clinical leaders, place on implementing changes to improve the care of older adults on their unit.  
+
+**Specialized Resources to Support Age-Friendly Care**
+
+The following diagrams illustrates nurses' perceptions regarding the availability of specialized resources to care for older adults.
+
+<center>
+**Cohort Results**
+</center>
+
+```{r,fig.width=13, fig.asp=.4}
+cols <- c("Never" = "#474C4F",
+          "Hardly Ever" = "#AE6180",
+          "Less than Monthly" = "#A3A9AC", 
+          "Monthly" = "#FFC842", 
+          "Weekly" = "#6BAB8A",
+          "Daily" = "#385B49")
+
+giap %>%
+  select(Q16_12, Q16_13) %>%
+  gather(Item, Response) %>% 
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response !=9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Daily",
+                              Response == 2 ~ "Weekly",
+                              Response == 3 ~ "Monthly",
+                              Response == 4 ~ "Less than Monthly",
+                              Response == 5 ~ "Hardly Ever",
+                              Response == 6 ~ "Never"),
+         Response = ordered(Response, levels = c('Daily','Weekly','Monthly','Less than Monthly','Hardly Ever','Never')),
+         Item = case_when(Item == "Q16_12" ~ "Geriatric Journals",
+                          Item == "Q16_13" ~ "Continuing Education Programs")) %>%
+  mutate(Item = wrap_15(Item)) %>%
+  ggplot(aes(x = Item, y = n, fill = Response)) +
+  geom_bar(position = "fill", stat = "identity", width = .5, color = "white") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", text = element_text(size = 20, color = "black"),        panel.border = element_blank())
+```
+
+<center>
+**`r name` Results**
+</center>
+
+```{r,fig.width=13, fig.asp=.4}
+giap %>%
+  filter(Hospital.Name==name) %>% 
+  select(Q16_12, Q16_13) %>%
+  gather(Item, Response) %>% 
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response !=9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Daily",
+                              Response == 2 ~ "Weekly",
+                              Response == 3 ~ "Monthly",
+                              Response == 4 ~ "Less than Monthly",
+                              Response == 5 ~ "Hardly Ever",
+                              Response == 6 ~ "Never"),
+         Response = ordered(Response, levels = c('Daily','Weekly','Monthly','Less than Monthly','Hardly Ever','Never')),
+         Item = case_when(Item == "Q16_12" ~ "Geriatric Journals",
+                          Item == "Q16_13" ~ "Continuing Education Programs")) %>%
+  mutate(Item = wrap_15(Item)) %>%
+  ggplot(aes(x = Item, y = n, fill = Response)) +
+  geom_bar(position = "fill", stat = "identity", width = .5, color = "white") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", text = element_text(size = 20, color = "black"),        panel.border = element_blank())
+```
+
+**Age-Friendly Care Planning and Patient-Centered Care**
+
+The following diagram illustrates nurses' perceptions regarding the organizational environment to provide nursing care tailored to the unique needs of older adults.
+
+<center>
+**Cohort Level**
+</center>
+
+```{r,fig.width=13, fig.asp=.4}
+cols <- c("Strongly Disagree" = "#474C4F",
+          "Disagree" = "#AE6180",
+          "Neither Agree nor Disagree" = "#A3A9AC", 
+          "Agree" = "#FFC842", 
+          "Strongly Agree" = "#6BAB8A")
+
+giap %>%
+  select(Q7_1, Q7_2, Q7_5, Q7_7, Q7_11, Q7_13) %>%
+  gather(Item, Response) %>% 
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Strongly Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Strongly Agree"),
+         Response = ordered(Response, levels = rev(c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree"))),
+         Item = case_when(Item == "Q7_1" ~ "Staff provide individualized, person-centered care",
+                          Item == "Q7_2" ~ "Older adults get the care they need ",
+                          Item == "Q7_5" ~ "Staff are familiar with how aging affects treatment responses",
+                          Item == "Q7_7" ~ "Aging is considered as a factor when planning and evaluating care",
+                          Item == "Q7_11" ~ "Staff receive information about the older adult's pre-hospitalization baseline",
+                          Item == "Q7_13" ~ "There is continuity of care across settings")) %>%
+  mutate(Item = wrap_30(Item)) %>%
+  ggplot(aes(x = Item, y = n, fill = Response)) +
+  geom_bar(position = "fill", stat = "identity", width = .6, color = "white") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", text = element_text(size = 20, color = "black"),
+        plot.margin = unit(c(-0.3, 0, 0, 0), "cm"),
+        panel.border = element_blank())
+```
+
+<center>
+**`r name`**
+</center>
+
+```{r,fig.width=13, fig.asp=.4}
+giap %>%
+  filter(Hospital.Name==name) %>% 
+  select(Q7_1, Q7_2, Q7_5, Q7_7, Q7_11, Q7_13) %>%
+  gather(Item, Response) %>% 
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Strongly Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Strongly Agree"),
+         Response = ordered(Response, levels = rev(c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree"))),
+         Item = case_when(Item == "Q7_1" ~ "Staff provide individualized, person-centered care",
+                          Item == "Q7_2" ~ "Older adults get the care they need ",
+                          Item == "Q7_5" ~ "Staff are familiar with how aging affects treatment responses",
+                          Item == "Q7_7" ~ "Aging is considered as a factor when planning and evaluating care",
+                          Item == "Q7_11" ~ "Staff receive information about the older adult's pre-hospitalization baseline",
+                          Item == "Q7_13" ~ "There is continuity of care across settings")) %>%
+  mutate(Item = wrap_30(Item)) %>%
+  ggplot(aes(x = Item, y = n, fill = Response)) +
+  geom_bar(position = "fill", stat = "identity", width = .6, color = "white") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", text = element_text(size = 20, color = "black"),
+        plot.margin = unit(c(-0.3, 0, 0, 0), "cm"),
+        panel.border = element_blank())
+```
+
+**Organizational Values to Support Age-Sensitive Care**
+
+The following diagram illustrates nurses' perceptions regarding organizational values to provide nursing care tailored to the unique needs of older adults.
+
+*(Note: These questions assess nurses' perceptions regarding barriers and the lack of specialized resources to care for older adults. For this diagram, higher levels of disagreement reflect nurses' perceptions that the organization values and supports care for older adults.)*
+
+<center>
+**Cohort Level**
+</center>
+
+```{r,fig.width=13, fig.height=5.5}
+giap %>%
+  select(Q8_1, Q8_2, Q8_4, Q8_5, Q8_8, Q8_11, Q8_12) %>%
+  gather(Item, Response) %>% 
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Strongly Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Strongly Agree"),
+         Response = ordered(Response, levels = rev(c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree"))),
+         Item = case_when(Item == "Q8_1" ~ "Lack of knowledge about care of older adults",
+                          Item == "Q8_2" ~ "Lack of (or inadequate) written policies and procedures specific to the older adult population",
+                          Item == "Q8_4" ~ "Lack of specialized equipment (eg: raised toilet seats, bed alarms, mattresses or beds)",
+                          Item == "Q8_5" ~ "Lack of specialized services for the older adult",
+                          Item == "Q8_8" ~ "Pressures to limit treatment based on insurance reimbursement",
+                          Item == "Q8_11" ~ "Communication difficulties with older adults and their families",
+                          Item == "Q8_12" ~ "Confusion over who is the appropriate decision maker for the older adult")) %>%
+  mutate(Item = wrap_30(Item)) %>%
+  ggplot(aes(x = Item, y = n, fill = Response)) +
+  geom_bar(position = "fill", stat = "identity", width = .6, color = "white") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", text = element_text(size = 20, color = "black"),
+        plot.margin = unit(c(-0.3, 0, 0, 0), "cm"),
+        panel.border = element_blank())
+```
+
+<center>
+**`r name`**
+</center>
+
+```{r,fig.width=13, fig.height=5.5}
+giap %>%
+  filter(Hospital.Name==name) %>% 
+  select(Q8_1, Q8_2, Q8_4, Q8_5, Q8_8, Q8_11, Q8_12) %>%
+  gather(Item, Response) %>% 
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Strongly Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Strongly Agree"),
+         Response = ordered(Response, levels = rev(c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree"))),
+         Item = case_when(Item == "Q8_1" ~ "Lack of knowledge about care of older adults",
+                          Item == "Q8_2" ~ "Lack of (or inadequate) written policies and procedures specific to the older adult population",
+                          Item == "Q8_4" ~ "Lack of specialized equipment (eg: raised toilet seats, bed alarms, mattresses or beds)",
+                          Item == "Q8_5" ~ "Lack of specialized services for the older adult",
+                          Item == "Q8_8" ~ "Pressures to limit treatment based on insurance reimbursement",
+                          Item == "Q8_11" ~ "Communication difficulties with older adults and their families",
+                          Item == "Q8_12" ~ "Confusion over who is the appropriate decision maker for the older adult")) %>%
+  mutate(Item = wrap_30(Item)) %>%
+  ggplot(aes(x = Item, y = n, fill = Response)) +
+  geom_bar(position = "fill", stat = "identity", width = .6, color = "white") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", text = element_text(size = 20, color = "black"),
+        plot.margin = unit(c(-0.3, 0, 0, 0), "cm"),
+        panel.border = element_blank())
+```
+
+**Unit Environment to Support Improvements in the Care of Older Adults**
+
+The following diagram illustrates nurses' perceptions regarding the priority that nurse mangers and clinical leaders place on improving care for older adults.
+
+<center>
+**Cohort Level**
+</center>
+
+```{r, fig.width=13, fig.height=5.3}
+giap %>%
+  select(Q7_26, Q7_27, Q7_28, Q7_29, Q7_30) %>%
+  gather(Item, Response) %>% 
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Strongly Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Strongly Agree"),
+         Response = ordered(Response, levels = rev(c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree"))),
+         Item = case_when(Item == "Q7_26" ~ "The time required to manage common nursing problems experienced by older adults is factored into staff assignments",
+                          Item == "Q7_27" ~ "Training is readily available to staff that want to learn more about the care of older adults",
+                          Item == "Q7_28" ~ "Staff are encouraged to take time off from their regular work tasks to implement new care practices",
+                          Item == "Q7_29" ~ "The nurse administrators (unit managers, supervisors, senior leaders) take an active interest in improving care for older adults",
+                          Item == "Q7_30" ~ "Care of the older adult is a priority on my unit")) %>%
+  mutate(Item = wrap_30(Item)) %>%
+  ggplot(aes(x = Item, y = n, fill = Response)) +
+  geom_bar(position = "fill", stat = "identity", width = .6, color = "white") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", text = element_text(size = 20, color = "black"),
+        plot.margin = unit(c(-0.3, 0, 0, 0), "cm"),
+        panel.border = element_blank())
+```
+
+<center>
+**`r name`**
+</center>
+
+```{r, fig.width=13, fig.height=5.3}
+giap %>%
+  filter(Hospital.Name==name) %>% 
+  select(Q7_26, Q7_27, Q7_28, Q7_29, Q7_30) %>%
+  gather(Item, Response) %>% 
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Strongly Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Strongly Agree"),
+         Response = ordered(Response, levels = rev(c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree"))),
+         Item = case_when(Item == "Q7_26" ~ "The time required to manage common nursing problems experienced by older adults is factored into staff assignments",
+                          Item == "Q7_27" ~ "Training is readily available to staff that want to learn more about the care of older adults",
+                          Item == "Q7_28" ~ "Staff are encouraged to take time off from their regular work tasks to implement new care practices",
+                          Item == "Q7_29" ~ "The nurse administrators (unit managers, supervisors, senior leaders) take an active interest in improving care for older adults",
+                          Item == "Q7_30" ~ "Care of the older adult is a priority on my unit")) %>%
+  mutate(Item = wrap_30(Item)) %>%
+  ggplot(aes(x = Item, y = n, fill = Response)) +
+  geom_bar(position = "fill", stat = "identity", width = .6, color = "white") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", text = element_text(size = 20, color = "black"),
+        plot.margin = unit(c(-0.3, 0, 0, 0), "cm"),
+        panel.border = element_blank())
+```
+
