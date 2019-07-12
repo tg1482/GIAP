@@ -1,0 +1,399 @@
+---
+output:
+  html_document:
+    theme: cosmo
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 6, fig.asp = 0.618, out.width = "80%", fig.align = "center", dev='svg', fig.show='hold')
+
+library(pacman)
+p_load(tidyverse, ggplot2, pander, knitr, scales, readxl, kableExtra, rmarkdown, knitcitations, imputeTS, lubridate, mice, googleway, rpart, rpart.plot)
+```
+
+```{r, fig.align = "left", out.width='15%'}
+knitr::include_graphics("NICHE_logo.jpg")
+```
+
+<center>
+# **Nurses Improving Care for Healthsystem Elders**
+## **Geriatric Institutional Assessment Profile Report**
+### **October 2018 Cohort**
+</center>
+
+The main aim of this research project is to discover the leading causes which directly affect the participation at NICHE Conferences. Keeping that in mind, we have collected the data of our member hospitals and their characteristics and we will now run some analysis to find what characteristic affects the participation rates. 
+
+The goal is to maximize participation and we will find the trends using a generalized linear model. This model will be prescriptive not predictive. 
+
+```{r}
+data <- read_excel("Niche Conference.xlsx")
+
+data <- data[1:505,]
+```
+
+Checking if the data has any missing values, as that will affect the performance of the model.
+
+```{r}
+na.check <- function(x) any(is.na(x))
+
+apply(X = data, FUN = na.check, MARGIN = 2)
+
+colnames(data) <- make.names(colnames(data))
+```
+
+We now know that every column in the data has missing values. We now need to carefully deal with this - by either filling them or removing the specific data point with the missing value.
+
+### 18 Digit ID
+
+```{r}
+sum(duplicated(data$X18.Digit.ID))
+```
+
+Since all values in 18 Digit ID are unique, this column does not help us with finding any paterns, in turn, it just increases the complexity of the data. I will be removing this column. 
+
+```{r}
+data <- data %>% 
+  filter(!is.na(X18.Digit.ID)) %>% 
+  select(-X18.Digit.ID)
+```
+
+### Ownership Type
+
+```{r}
+table(data$Ownership.Type, useNA = "ifany")
+```
+
+We can see that we have 169 values with no entry. For this, we will fill these cells with "Other."
+
+```{r}
+data <- data %>% mutate(Ownership.Type = ifelse(is.na(Ownership.Type), "Other", Ownership.Type),
+                        Ownership.Type = as.factor(Ownership.Type))
+```
+
+```{r}
+table(data$Ownership.Type, useNA = "ifany")
+```
+
+### Name of Health System
+
+```{r}
+sum(is.na(data$Name.of.Health.System))
+```
+
+303 out of `r nrow(data)` data points are empty for this column. I will be removing it for now.
+
+```{r}
+data <- data %>% 
+  select(-Name.of.Health.System)
+```
+
+
+### Parent Account
+
+```{r}
+data[is.na(data$Parent.Account),]
+```
+
+Since there are only 2 hospitals with no Parent Account, I will manually enter a value for them - "Other."
+
+```{r}
+data[is.na(data$Parent.Account),"Parent.Account"] <- "Other"
+data <- data %>% 
+  mutate(Parent.Account = as.factor(Parent.Account))
+```
+
+### Elsevier Account Number
+
+Same reason as 18 Digit ID. Removing Column.
+
+```{r}
+data <- data %>% select(-Elsevier.Account.Number)
+```
+
+
+### Designated Since
+
+```{r}
+data[is.na(parse_number(data$Designated.Since)),]
+```
+
+There are 2 accounts which do not have a value in their designated since column. Since, both these accounts are NYU accounts, I will be removing them. 
+
+```{r}
+data <- data %>%
+  filter(Parent.Account!="NYU") %>% 
+  mutate(Designated.Since = parse_number(Designated.Since))
+```
+
+
+### Initial LTP Date
+
+```{r}
+data$Initial.LTP.Date %>% is.na() %>% sum()
+```
+
+There are 7 accounts with no data. I will be manually filling - "None."
+
+```{r}
+data[is.na(data$Initial.LTP.Date), "Initial.LTP.Date"] <- "None"
+
+data <- data %>% 
+  mutate(Initial.LTP.Date = as.factor(Initial.LTP.Date))
+```
+
+Since there are too many categories in Initial LTP Date, we are now going to reduce them to the basic - Legacy, Year of Registration, Other, and None options. 
+
+```{r}
+data <- data %>% 
+  mutate(LTP.Year = zoo::as.yearmon(Initial.LTP.Date, "%B %Y"),
+         LTP.Year = lubridate::year(LTP.Year),
+         LTP.Year = ifelse(is.na(LTP.Year), "Legacy", LTP.Year),
+         LTP.Year = ifelse(Initial.LTP.Date=="Other", "Other", LTP.Year),
+         LTP.Year = ifelse(Initial.LTP.Date=="LTP Pilot 2009", "Pilot 2009", LTP.Year),
+         LTP.Year = ifelse(Initial.LTP.Date=="None", "None", LTP.Year),
+         LTP.Year = as.factor(LTP.Year)) %>% 
+  select(-Initial.LTP.Date)
+```
+
+
+### Type
+
+```{r}
+table(data$Type, useNA = "ifany")
+
+data <- data %>% 
+  mutate(Type = case_when(Type == "Add-On LTC" ~ "Add-On",
+                          Type == "Flagship LTC" ~ "Flagship",
+                          Type == "Associate" ~ "Associate",
+                          Type == "Add-On" ~ "Add-On",
+                          Type == "Flagship" ~ "Flagship"),
+         Type = as.factor(Type))
+```
+
+### Implementation Level
+
+```{r}
+table(data$Implementation.Level, useNA = "ifany")
+```
+
+Filling the 12 NA values with - "Other"
+
+```{r}
+data[is.na(data$Implementation.Level), "Implementation.Level"] <- "Other"
+
+data <- data %>% mutate(Implementation.Level = as.factor(Implementation.Level))
+```
+
+### Number of Staffed Beds
+
+```{r}
+sum(is.na(data$Number.of.Staffed.Beds))
+```
+
+There are 22 accounts with no details on number of staffed beds. 
+
+So far, I will just use the mean value of bed size to fill this column.
+
+```{r}
+data[is.na(data$Number.of.Staffed.Beds), "Number.of.Staffed.Beds"] <- mean(data$Number.of.Staffed.Beds, na.rm = T)
+
+data <- data %>% 
+  mutate(Number.of.Staffed.Beds = floor(Number.of.Staffed.Beds),
+         Number.of.Staffed.Beds = as.numeric(Number.of.Staffed.Beds))
+```
+
+### Magnet Status
+
+I will now create a dummy variable for Magnet Status.
+
+```{r}
+data <- data %>% 
+  mutate(Magnet = ifelse(is.na(Magnet.Status), 0, 1),
+         Magnet = ifelse(is.na(Magnet), "None", Magnet),
+         Magnet = as.factor(Magnet)) %>% 
+  select(-Magnet.Status)
+```
+
+
+### Billing / Website City
+
+```{r}
+sum(is.na(data$Billing.Website.City))
+```
+
+There are 4 NA values. Making them, "Other."
+
+```{r}
+data[is.na(data$Billing.Website.City), "Billing.Website.City"] <- "Other"
+data <- data %>% mutate(Billing.Website.City = as.factor(Billing.Website.City))
+```
+
+### Billing / Website Province
+
+```{r}
+sum(is.na(data$Billing.Website.State.Province))
+```
+
+There are 4 NA values. Making them, "Other."
+
+```{r}
+data[is.na(data$Billing.Website.State.Province), "Billing.Website.State.Province"] <- "Other"
+data <- data %>% mutate(Billing.Website.State.Province = as.factor(Billing.Website.State.Province))
+```
+
+
+### Distance from Conference Location
+
+I believe that distance between the hospitals and the conference destination in 2018 may play an important role in this, so to test that hypothesis, I had found the distance between the hospital address and the conference location using a Google API and expressed that in the Distance Column in miles.  
+
+```{r}
+#Add <- paste(data$Billing.Website.Street, 
+#            data$Billing.Website.City,
+#            data$Billing.Website.State.Province, 
+#            data$Billing.Website.Zip.Postal.Code, 
+#            sep = ', ')
+
+#Dist <- c()
+
+#for(i in 1:length(Add)){
+#  dis <- google_distance(Add[i],
+#                         "Atlanta Marriott Marquis, Atlanta, GA",
+#                         mode = "driving",
+#                         key = "AIzaSyCSn6MxRB8rN1ZdycvuE8LsKVbAQ4IvyLY", 
+#                         simplify = T)
+#  num <- parse_number(unlist(dis$rows$elements)[1])
+#  Dist[i] <- ifelse(is.numeric(num), num, "NA")
+#}
+
+#save(Dist, file="Dist.RData")
+
+#for(i in 1:length(Add)){
+#  dis <- google_distance(Add[i],
+#                         "380 2nd Avenue, New York, NY",
+#                         mode = "driving",
+#                         key = "AIzaSyCSn6MxRB8rN1ZdycvuE8LsKVbAQ4IvyLY", 
+#                         simplify = T)
+#  num <- parse_number(unlist(dis$rows$elements)[1])
+#  Dist[i] <- ifelse(is.numeric(num), num, "NA")
+#}
+
+#save(Dist, file="Dist_NICHE.RData")
+
+load("Dist.RData")
+load("Dist_NICHE.RData")
+
+data$Distance.Conf <- Dist
+data$Distance.Niche <- Dist_NICHE
+
+data <- data[!is.na(Dist),]
+
+data <- data %>% select(-Billing.Website.Country, -Billing.Website.Street, -Billing.Website.City, 
+                        -Billing.Website.Zip.Postal.Code, -Account.Name, -Critical.Access.,
+                        -CMS.Combined.Hospital., -CMS.Combined.Hospital.Name, -Cohort, -Membership.Expiration,
+                        -Parent.Account, -Billing.Website.State.Province)
+```
+
+
+Saving the distance data locally to minimize Google API usage and time. 
+
+
+### Attended 2018 conference
+
+Main variable of interest
+
+```{r}
+data <- data %>% 
+  mutate(Attended.2018.conference = as.numeric(Attended.2018.conference),
+         Designated.Since = as.factor(Designated.Since))
+
+data <- data[!is.na(data$Attended.2018.conference),]
+```
+
+
+## Model Creation
+
+```{r}
+apply(X = data, FUN = na.check, MARGIN = 2)
+```
+
+
+```{r}
+model1 <- glm(Attended.2018.conference ~ .,
+              data = data, family = poisson(), na.action = na.exclude)
+
+```
+
+```{r}
+summary(model1)
+
+pred1 <- predict(model1)
+model1.sse <- sum((pred1 - data$Attended.2018.conference)^2)
+```
+
+```{r}
+with(model1, cbind(res.deviance = deviance, df = df.residual,
+  p = pchisq(deviance, df.residual, lower.tail=FALSE)))
+
+#data %>% ggplot_shiny()
+```
+
+
+We can see that Magnet Status does not really have a major impact on the Conference attendence. 
+
+```{r}
+tree1 = rpart(Attended.2018.conference ~ .,
+              data = data)
+
+prp(tree2)
+```
+
+```{r}
+fittedvalues = predict(tree1)
+
+tree.sse = sum((fittedvalues - data$Attended.2018.conference)^2)
+```
+
+```{r}
+data.beds <- data %>%
+  mutate(Bed.Cat = case_when(Number.of.Staffed.Beds<200 ~ "Small",
+                             Number.of.Staffed.Beds>=200 & Number.of.Staffed.Beds<400 ~ "Medium",
+                             Number.of.Staffed.Beds>=400 ~ "Large"),
+         Bed.Cat = as.factor(Bed.Cat)) %>% 
+  select(-Number.of.Staffed.Beds)
+
+dat1 <- data %>% filter(Number.of.Staffed.Beds>1000)
+hist(dat1$Attended.2018.conference)
+sum(data$Attended.2018.conference>25)
+
+dat1 <- data %>% filter(Attended.2018.conference>20)
+hist(dat1$Attended.2018.conference)
+```
+
+```{r}
+tree2 = rpart(Attended.2018.conference ~ .,
+              data = data.beds)
+
+tree2.fittedvalues = predict(tree2)
+tree2.sse = sum((tree2.fittedvalues - data.beds$Attended.2018.conference)^2)
+```
+
+```{r}
+model2 <- glm(Attended.2018.conference ~ .,
+              data = data.beds %>% select(-Designated.Since), family = poisson(), na.action = na.exclude)
+
+```
+
+```{r}
+summary(model2)
+
+pred2 <- predict(model2)
+model2.sse <- sum((pred2 - data.beds$Attended.2018.conference)^2)
+```
+
+```{r}
+with(model2, cbind(res.deviance = deviance, df = df.residual,
+  p = pchisq(deviance, df.residual, lower.tail=FALSE)))
+
+#data %>% ggplot_shiny()
+```
