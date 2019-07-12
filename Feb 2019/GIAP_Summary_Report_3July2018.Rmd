@@ -1,0 +1,1508 @@
+---
+title: "Geriatric Institutional Assessment Profile (GIAP) Summary Report"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 6, fig.asp = 0.9, out.width = "90%", fig.align = "center", dev='svg')
+```
+
+```{r}
+library(openxlsx)
+library(tidyverse)
+library(ggthemes)
+library(scales)
+library(data.table)
+library(haven)
+library(pander)
+library(lme4)
+library(emmeans)
+library(pander)
+
+panderOptions('table.split.table', Inf)
+
+NICHE_colors <- c("#57068C","#6199AE","#FFC842","#314383","#6BAB8A","#F09C5D")
+```
+
+```{r}
+giap <- read_sav("C:/Users/tg1482/Desktop/GIAP/Feb 2019/NICHE-GIAP - Cohort 4 - Alldata.sav")
+
+wrap_20 <- wrap_format(20)
+wrap_30 <- wrap_format(30)
+wrap_40 <- wrap_format(40)
+```
+
+## Nurse
+### Highest Degree (Registered Nurses Only)
+```{r}
+giap %>%
+  filter(!is.na(Q30) & Q30 != "I am not a registered nurse") %>%
+  rename(Degree = Q30) %>%
+  count(Degree) %>%
+  mutate(Percent = round(n / sum(n) * 100, 1),
+         Degree = case_when(Degree == 1 ~ "Diploma",
+            Degree == 2 ~ "Associate's Degree",
+            Degree == 3 ~ "Baccalaureate Degree",
+            Degree == 4 ~ "Master's Degree",
+            Degree == 5 ~ "Doctorate",
+            Degree == 6 ~ "I am not a registered nurse",
+            Degree == -1 | Degree == 9 ~ "Refused/Not Answered"),
+         Degree = factor(Degree, levels = c("Refused/Not Answered", "I am not a registered nurse", 
+                                            "Doctorate", "Master's Degree", "Baccalaureate Degree", 
+                                            "Associate's Degree", "Diploma"))) %>%
+  rename(Count = n) %>%
+  pander()
+``` 
+
+### Highest Degree (Staff Other Than RNs)
+```{r}
+giap %>%
+  filter(!is.na(Q31) & Q30 == "I am not a registered nurse") %>%
+  rename(Degree = Q31) %>%
+  count(Degree) %>%
+  mutate(Percent = round(n / sum(n) * 100, 1)) %>%
+  arrange(desc(n)) %>% rename(Count = n) %>%
+  knitr::kable()
+```  
+
+### Gender
+```{r}
+giap %>%
+  filter(!is.na(Q21)) %>%
+  rename(Gender = Q21) %>%
+  count(Gender) %>%
+  mutate(Percent = round(n / sum(n) * 100, 1)) %>%
+  arrange(desc(n)) %>% rename(Count = n) %>%
+  knitr::kable()
+```
+
+### Ethnicity
+```{r}
+giap %>%
+  filter(!is.na(Q22)) %>%
+  rename(Ethnicity = Q22) %>%
+  count(Ethnicity) %>%
+  mutate(Percent = round(n / sum(n) * 100, 1)) %>%
+  arrange(desc(n)) %>% rename(Count = n) %>%
+  knitr::kable()
+```
+
+### Race
+```{r}
+giap %>%
+  filter(!is.na(Q23)) %>%
+  rename(Race = Q23) %>%
+  count(Race) %>%
+  mutate(Percent = round(n / sum(n) * 100, 1)) %>%
+  arrange(desc(n)) %>% rename(Count = n) %>%
+  knitr::kable()
+```
+
+### Certifications general
+```{r}
+giap %>%
+  filter(!is.na(Q26)) %>%
+  rename(Certifications = Q26) %>%
+  count(Certifications) %>%
+  mutate(Percent = round(n / sum(n) * 100, 1)) %>%
+  arrange(desc(n)) %>% rename(Count = n) %>%
+  knitr::kable()
+```
+
+### Certifications-geriatric nursing
+```{r}
+giap %>%
+  filter(!is.na(Q27)) %>%
+  rename(Certifications = Q27) %>%
+  count(Certifications) %>%
+  mutate(Percent = round(n / sum(n) * 100, 1)) %>%
+  arrange(desc(n)) %>% rename(Count = n) %>%
+  knitr::kable()
+```
+
+### Position spend majority time
+```{r}
+giap %>%
+  filter(!is.na(Q1)) %>%
+  rename(Position = Q1) %>%
+  count(Position) %>%
+  mutate(Percent = round(n / sum(n) * 100, 1)) %>%
+  arrange(desc(n)) %>% rename(Count = n) %>%
+  knitr::kable()
+```
+
+### Years experience in profession
+```{r}
+giap %>%
+  mutate(Q2 = as.numeric(Q2)) %>%
+  filter(!is.na(Q2)) %>%
+  ggplot(aes(x = Q2)) + 
+  geom_histogram(fill = "#314383", color = "white") +
+  labs(x = "Years", y = "Nurses") +
+  theme_minimal()
+```
+
+### Job satisfaction
+```{r}
+giap %>%
+  filter(!is.na(Q32)) %>%
+  rename(`I am satisfied with my current job` = Q32) %>%
+  count(`I am satisfied with my current job`) %>%
+  mutate(Percent = round(n / sum(n) * 100, 1)) %>%
+  arrange(desc(n)) %>% rename(Count = n) %>%
+  knitr::kable()
+```
+
+### How rewarding is your work with older adults? 
+```{r}
+giap %>%
+  filter(!is.na(Q12)) %>%
+  rename(`How rewarding?` = Q12) %>%
+  count(`How rewarding?`) %>%
+  mutate(Percent = round(n / sum(n) * 100, 1)) %>%
+  arrange(desc(n)) %>% rename(Count = n) %>%
+  knitr::kable()
+```
+
+```{r}
+RA_items <- c('Q8_1', 'Q8_2', 'Q8_3', 'Q8_4', 'Q8_5', 'Q8_6', 'Q8_9', 'Q8_10', 'Q8_11', 'Q8_7', 'Q8_12')
+ASC_items <- c('Q7_1', 'Q7_2', 'Q7_4', 'Q7_5', 'Q7_7', 'Q7_8', 'Q7_9', 'Q7_10', 'Q7_11', 'Q7_12', 'Q7_13')
+IC_items <- c('Q7_26', 'Q7_27', 'Q7_28', 'Q7_29', 'Q7_30')
+OV_items <- c('Q7_19', 'Q7_20', 'Q7_21', 'Q7_22', 'Q7_25')
+Falls_items <- c('Q5_7', 'Q5_8', 'Q5_14', 'Q5_21', 'Q5_24', 'Q5_25', 'Q5_26', 'Q5_33', 'Q20_31', 'Q20_32')
+Restraints_items <- c('Q5_1', 'Q20_40', 'Q20_42', 'Q20_48')
+Skin_items <- c('Q5_6', 'Q20_37', 'Q20_38', 'Q20_43', 'Q20_44', 'Q20_46', 'Q20_47')
+Incontinence_items <- c('Q5_3', 'Q5_4', 'Q5_5', 'Q20_7', 'Q20_8', 'Q20_9', 'Q20_12', 'Q20_13', 'Q20_14')
+Pain_items <- c('Q5_9', 'Q5_23', 'Q20_15', 'Q20_17', 'Q20_18')
+Delirium_items <- c('Q20_19', 'Q20_20', 'Q20_52', 'Q20_55', 'Q20_58')
+Dementia_items <- c('Q5_20', 'Q20_22', 'Q20_26', 'Q20_29')
+Nutrition_items <- c('Q5_11', 'Q5_13', 'Q5_19', 'Q20_33', 'Q20_51')
+```
+
+
+# PRACTICE ENVIRONMENT
+## Resource Availability
+```{r}
+ResAv <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q8_1, Q8_2, Q8_3, Q8_4, Q8_5, Q8_6, Q8_9, Q8_10, Q8_11, Q8_7, Q8_12) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response = case_when(Response %in% c("1. Strongly disagree","1. Strongly Disagree") ~ "Strongly Disagree",
+                              Response %in% c("2. Disagree") ~ "Disagree",
+                              Response %in% c("3. Neither Agree nor Disagree","3. Neither agree nor disagree","3. Neither Agree or Disagree") ~ "Neither Agree nor Disagree",
+                              Response %in% c("4. Agree") ~ "Agree",
+                              Response %in% c("5. Strongly Agree","5. Strongly agree") ~ "Strongly Agree"),
+         Response = ordered(Response, levels = c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree")),
+         Response_Num = case_when(Response == "Strongly Disagree" ~ 0,
+                                  Response == "Disagree" ~ 1,
+                                  Response == "Neither Agree nor Disagree" ~ 2,
+                                  Response == "Agree" ~ 3,
+                                  Response == "Strongly Agree" ~ 4),
+         Item = case_when(Item == "Q8_1" ~ "Lack knowledge about care",
+                          Item == "Q8_2" ~ "Lack written policy and procedure",
+                          Item == "Q8_3" ~ "Differences regarding common problems",
+                          Item == "Q8_4" ~ "Lack of equipment",
+                          Item == "Q8_5" ~ "Lack of specialized services",
+                          Item == "Q8_6" ~ "Exclusion of RNs from decisions",
+                          Item == "Q8_9" ~ "Economic pressures on LOS",
+                          Item == "Q8_10" ~ "Staff shortages / constraints",
+                          Item == "Q8_11" ~ "Communication difficulties",
+                          Item == "Q8_7" ~ "Exclusion of older adult from care decisions",
+                          Item == "Q8_12" ~ "Confusion regarding decision maker")) %>%
+  group_by(Hospital.ID) %>%
+  mutate(Resource_Availability_H = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID) %>%
+  mutate(Resource_Availability_U = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID, Participant.ID) %>%
+  mutate(Resource_Availability_P = mean(Response_Num)) %>%
+  ungroup() %>%
+  mutate(Resource_Availability_T = mean(Response_Num))
+
+ResAv %>%
+  count(Item, Response) %>%
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, Percent)) %>%
+  ungroup() %>%
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 11, color = "white") +
+  geom_text(aes(colour = Response), size = 3, position = position_fill(vjust = 0.5)) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = NICHE_colors[1:5]) +
+  scale_colour_manual(values=c("white","black","black","white","black"), guide = FALSE) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(size = 6, angle = 45, hjust = 1))
+```
+
+```{r}
+ResAv %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Resource_Availability_P) %>%
+  unique() %>%
+  ggplot(aes(x = Resource_Availability_P)) + geom_histogram(fill = "#314383", color = "white", binwidth = 0.1) +
+  scale_x_continuous(limits=c(0,4)) +
+  labs(x = "Resource Availability", y = "Nurses") +
+  theme_minimal()
+```
+
+## Age-Sensitive Care
+```{r}
+AgeSensCare <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q7_1, Q7_2, Q7_4, Q7_5, Q7_7, Q7_8, Q7_9, Q7_10, Q7_11, Q7_12, Q7_13) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response = case_when(Response %in% c("1. Strongly disagree","1. Strongly Disagree") ~ "Strongly Disagree",
+                              Response %in% c("2. Disagree") ~ "Disagree",
+                              Response %in% c("3. Neither Agree nor Disagree","3. Neither agree nor disagree","3. Neither Agree or Disagree") ~ "Neither Agree nor Disagree",
+                              Response %in% c("4. Agree") ~ "Agree",
+                              Response %in% c("5. Strongly Agree","5. Strongly agree") ~ "Strongly Agree"),
+         Response = ordered(Response, levels = c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree")),
+         Response_Num = case_when(Response == "Strongly Disagree" ~ 0,
+                                  Response == "Disagree" ~ 1,
+                                  Response == "Neither Agree nor Disagree" ~ 2,
+                                  Response == "Agree" ~ 3,
+                                  Response == "Strongly Agree" ~ 4),
+         Item = case_when(Item == "Q7_1" ~ "Individualized care",
+                          Item == "Q7_2" ~ "Care needed",
+                          Item == "Q7_4" ~ "Addresses issues",
+                          Item == "Q7_5" ~ "How aging affects treatment responses",
+                          Item == "Q7_7" ~ "Aging is a factor in plan of care",
+                          Item == "Q7_8" ~ "Patients receive information to make decisions",
+                          Item == "Q7_9" ~ "Families receive information",
+                          Item == "Q7_10" ~ "Families receive support",
+                          Item == "Q7_11" ~ "Pre-hospitalization baseline",
+                          Item == "Q7_13" ~ "Continuity of care across settings",
+                          Item == "Q7_12" ~ "Continuity of care across hospital units")) %>%
+  group_by(Hospital.ID) %>%
+  mutate(Age_Sensitive_Care_H = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID) %>%
+  mutate(Age_Sensitive_Care_U = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID, Participant.ID) %>%
+  mutate(Age_Sensitive_Care_P = mean(Response_Num)) %>%
+  ungroup() %>%
+  mutate(Age_Sensitive_Care_T = mean(Response_Num))
+  
+AgeSensCare %>%
+  count(Item, Response) %>%
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, Percent)) %>%
+  ungroup() %>%
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 11, color = "white") +
+  geom_text(aes(colour = Response), size = 3, position = position_fill(vjust = 0.5)) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = NICHE_colors[1:5]) +
+  scale_colour_manual(values=c("white","black","black","white","black"), guide = FALSE) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(size = 6, angle = 45, hjust = 1))
+```
+
+```{r}
+AgeSensCare %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Age_Sensitive_Care_P) %>%
+  unique() %>%
+  ggplot(aes(x = Age_Sensitive_Care_P)) + geom_histogram(fill = "#314383", color = "white", binwidth = 0.1) +
+  scale_x_continuous(limits=c(0,4)) +
+  labs(x = "Age-Sensitive Care", y = "Nurses") +
+  theme_minimal()
+```
+
+## Implementation Climate
+```{r}
+ImpClim <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q7_26, Q7_27, Q7_28, Q7_29, Q7_30) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response = case_when(Response %in% c("1. Strongly disagree","1. Strongly Disagree") ~ "Strongly Disagree",
+                              Response %in% c("2. Disagree") ~ "Disagree",
+                              Response %in% c("3. Neither Agree nor Disagree","3. Neither agree nor disagree","3. Neither Agree or Disagree") ~ "Neither Agree nor Disagree",
+                              Response %in% c("4. Agree") ~ "Agree",
+                              Response %in% c("5. Strongly Agree","5. Strongly agree") ~ "Strongly Agree"),
+         Response = ordered(Response, levels = c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree")),
+         Response_Num = case_when(Response == "Strongly Disagree" ~ 0,
+                                  Response == "Disagree" ~ 1,
+                                  Response == "Neither Agree nor Disagree" ~ 2,
+                                  Response == "Agree" ~ 3,
+                                  Response == "Strongly Agree" ~ 4),
+         Item = case_when(Item == "Q7_26" ~ "Time",
+                          Item == "Q7_27" ~ "Training",
+                          Item == "Q7_28" ~ "Time off work",
+                          Item == "Q7_29" ~ "Nursing management",
+                          Item == "Q7_30" ~ "Priority")) %>%
+  group_by(Hospital.ID) %>%
+  mutate(Implementation_Climate_H = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID) %>%
+  mutate(Implementation_Climate_U = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID, Participant.ID) %>%
+  mutate(Implementation_Climate_P = mean(Response_Num)) %>%
+  ungroup() %>%
+  mutate(Implementation_Climate_T = mean(Response_Num))
+  
+ImpClim %>%
+  count(Item, Response) %>%
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, Percent)) %>%
+  ungroup() %>%
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 5, color = "white") +
+  geom_text(aes(colour = Response), size = 3, position = position_fill(vjust = 0.5)) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = NICHE_colors[1:5]) +
+  scale_colour_manual(values=c("white","black","black","white","black"), guide = FALSE) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(size = 6, angle = 45, hjust = 1))
+```
+
+```{r}
+ImpClim %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Implementation_Climate_P) %>%
+  unique() %>%
+  ggplot(aes(x = Implementation_Climate_P)) + geom_histogram(fill = "#314383", color = "white", binwidth = 0.2) +
+  scale_x_continuous(limits=c(0,4)) +
+  labs(x = "Implementation Climate", y = "Nurses") +
+  theme_minimal()
+```
+
+## Organization Values
+```{r}
+OrgValues <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q7_19, Q7_20, Q7_21, Q7_22, Q7_25) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response = case_when(Response %in% c("1. Strongly disagree","1. Strongly Disagree") ~ "Strongly Disagree",
+                              Response %in% c("2. Disagree") ~ "Disagree",
+                              Response %in% c("3. Neither Agree nor Disagree","3. Neither agree nor disagree","3. Neither Agree or Disagree") ~ "Neither Agree nor Disagree",
+                              Response %in% c("4. Agree") ~ "Agree",
+                              Response %in% c("5. Strongly Agree","5. Strongly agree") ~ "Strongly Agree"),
+         Response = ordered(Response, levels = c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree")),
+         Response_Num = case_when(Response == "Strongly Disagree" ~ 0,
+                                  Response == "Disagree" ~ 1,
+                                  Response == "Neither Agree nor Disagree" ~ 2,
+                                  Response == "Agree" ~ 3,
+                                  Response == "Strongly Agree" ~ 4),
+         Item = case_when(Item == "Q7_19" ~ "Clinicians and administration work together",
+                          Item == "Q7_20" ~ "Acceptable to disagree with supervisor",
+                          Item == "Q7_21" ~ "Staff input regarding policies and guidelines",
+                          Item == "Q7_22" ~ "Older adults treated with respect",
+                          Item == "Q7_25" ~ "Rights of older adults protected")) %>%
+  group_by(Hospital.ID) %>%
+  mutate(Organization_Values_H = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID) %>%
+  mutate(Organization_Values_U = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID, Participant.ID) %>%
+  mutate(Organization_Values_P = mean(Response_Num)) %>%
+  ungroup() %>%
+  mutate(Organization_Values_T = mean(Response_Num))
+  
+OrgValues %>%
+  count(Item, Response) %>%
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, Percent)) %>%
+  ungroup() %>%
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 5, color = "white") +
+  geom_text(aes(colour = Response), size = 3, position = position_fill(vjust = 0.5)) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = NICHE_colors[1:5]) +
+  scale_colour_manual(values=c("white","black","black","white","black"), guide = FALSE) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(size = 6, angle = 45, hjust = 1))
+```
+
+```{r}
+OrgValues %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Organization_Values_P) %>%
+  unique() %>%
+  ggplot(aes(x = Organization_Values_P)) + geom_histogram(fill = "#314383", color = "white", binwidth = 0.2) +
+  scale_x_continuous(limits=c(0,4)) +
+  labs(x = "Organization Values", y = "Nurses") +
+  theme_minimal()
+```
+
+## Continuing Education Opportunities 
+```{r}
+EduOpp <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q17) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response = ordered(Response, levels = c("Poor","Fair","Good","Very Good","Excellent")),
+         Response_Num = case_when(Response == "Poor" ~ 0,
+                                  Response == "Fair" ~ 1,
+                                  Response == "Good" ~ 2,
+                                  Response == "Very Good" ~ 3,
+                                  Response == "Excellent" ~ 4),
+         Item = case_when(Item == "Q17" ~ "Job your institution has done educating\nstaff about the care of the older adult")) %>%
+  group_by(Hospital.ID) %>%
+  mutate(Edu_Opp_H = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID) %>%
+  mutate(Edu_Opp_U = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID, Participant.ID) %>%
+  mutate(Edu_Opp_P = mean(Response_Num)) %>%
+  ungroup() %>%
+  mutate(Edu_Opp_T = mean(Response_Num))
+  
+EduOpp %>%
+  count(Item, Response) %>%
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, Percent)) %>%
+  ungroup() %>%
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 1, color = "white") +
+  geom_text(aes(colour = Response), size = 3, position = position_fill(vjust = 0.5)) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = NICHE_colors[1:5]) +
+  scale_colour_manual(values=c("white","black","black","white","black"), guide = FALSE) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(size = 6, angle = 45, hjust = 1))
+```
+
+```{r}
+EduOpp %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Edu_Opp_P) %>%
+  unique() %>%
+  ggplot(aes(x = Edu_Opp_P)) + geom_histogram(fill = "#314383", color = "white", binwidth = 0.2) +
+  scale_x_continuous(limits=c(-0.5,4.5)) +
+  labs(x = "Education Opportunities", y = "Nurses") +
+  theme_minimal()
+```
+
+# KNOWLEDGE REGARDING CLINICAL PRACTICE
+## Falls
+```{r}
+Falls <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_7, Q5_8, Q5_14, Q5_21, Q5_24, Q5_25, Q5_26, Q5_33, Q20_31, Q20_32) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response = case_when(Response %in% c("1. Strongly Disgree","1. Strongly disagree","1. Strongly Disagree") ~ "Strongly Disagree",
+                              Response %in% c("2. Disagree") ~ "Disagree",
+                              Response %in% c("3. Neither Agree nor Disagree","3. Neither agree nor disagree","3. Neither Agree or Disagree") ~ "Neither Agree nor Disagree",
+                              Response %in% c("4. Agree") ~ "Agree",
+                              Response %in% c("5. Strongly Agree","5. Strongly agree") ~ "Strongly Agree"),
+         Response = ordered(Response, levels = c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree")),
+         Response_Num = case_when(Response == "Strongly Disagree" ~ 0,
+                                  Response == "Disagree" ~ 1,
+                                  Response == "Neither Agree nor Disagree" ~ 2,
+                                  Response == "Agree" ~ 3,
+                                  Response == "Strongly Agree" ~ 4),
+         Item = case_when(Item == "Q5_7" ~ "Bed alarms",
+                          Item == "Q5_8" ~ "Chair alarms",
+                          Item == "Q5_14" ~ "Anti-slip socks",
+                          Item == "Q5_21" ~ "Sitters",
+                          Item == "Q5_24" ~ "Adjustable low height beds",
+                          Item == "Q5_25" ~ "Hourly rounding",
+                          Item == "Q5_26" ~ "Toileting schedule",
+                          Item == "Q5_33" ~ "Sensory perception aids",
+                          Item == "Q20_31" ~ "Assess fall risk",
+                          Item == "Q20_32" ~ "Assess fear of falling")) %>%
+  group_by(Hospital.ID) %>%
+  mutate(Falls_H = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID) %>%
+  mutate(Falls_U = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID, Participant.ID) %>%
+  mutate(Falls_P = mean(Response_Num)) %>%
+  ungroup() %>%
+  mutate(Falls_T = mean(Response_Num))
+  
+Falls %>%
+  count(Item, Response) %>%
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, Percent)) %>%
+  ungroup() %>%
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 10, color = "white") +
+  geom_text(aes(colour = Response), size = 3, position = position_fill(vjust = 0.5)) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = NICHE_colors[1:5]) +
+  scale_colour_manual(values=c("white","black","black","white","black"), guide = FALSE) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(size = 6, angle = 45, hjust = 1))
+```
+
+```{r}
+Falls %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Falls_P) %>%
+  unique() %>%
+  ggplot(aes(x = Falls_P)) + geom_histogram(fill = "#314383", color = "white", binwidth = 0.1) +
+  scale_x_continuous(limits=c(0,4)) +
+  labs(x = "Falls Knowledge", y = "Nurses") +
+  theme_minimal()
+```
+
+## Restraints
+```{r}
+Restraints <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_1, Q20_40, Q20_42, Q20_48) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response = case_when(Response %in% c("1. Strongly Disgree","1. Strongly disagree","1. Strongly Disagree") ~ "Strongly Disagree",
+                              Response %in% c("2. Disagree") ~ "Disagree",
+                              Response %in% c("3. Neither Agree nor Disagree","3. Neither agree nor disagree","3. Neither Agree or Disagree") ~ "Neither Agree nor Disagree",
+                              Response %in% c("4. Agree") ~ "Agree",
+                              Response %in% c("5. Strongly Agree","5. Strongly agree") ~ "Strongly Agree"),
+         Response = ordered(Response, levels = c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree")),
+         Response_Num = case_when(Item %in% c("Q5_1","Q20_40") & Response == "Strongly Disagree" ~ 4,
+                                  Item %in% c("Q5_1","Q20_40") & Response == "Disagree" ~ 3,
+                                  Item %in% c("Q5_1","Q20_40") & Response == "Neither Agree nor Disagree" ~ 2,
+                                  Item %in% c("Q5_1","Q20_40") & Response == "Agree" ~ 1,
+                                  Item %in% c("Q5_1","Q20_40") & Response == "Strongly Agree" ~ 0,
+                                  Response == "Strongly Disagree" ~ 0,
+                                  Response == "Disagree" ~ 1,
+                                  Response == "Neither Agree nor Disagree" ~ 2,
+                                  Response == "Agree" ~ 3,
+                                  Response == "Strongly Agree" ~ 4),
+         Item = case_when(Item == "Q5_1" ~ "Mechanical restraints",
+                          Item == "Q20_40" ~ "Confused patients are safer when restrained",
+                          Item == "Q20_42" ~ "Alternatives to restraints",
+                          Item == "Q20_48" ~ "Nerve injuries")) %>%
+  group_by(Hospital.ID) %>%
+  mutate(Restraints_H = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID) %>%
+  mutate(Restraints_U = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID, Participant.ID) %>%
+  mutate(Restraints_P = mean(Response_Num)) %>%
+  ungroup() %>%
+  mutate(Restraints_T = mean(Response_Num))
+  
+Restraints %>%
+  count(Item, Response) %>%
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, Percent)) %>%
+  ungroup() %>%
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 4, color = "white") +
+  geom_text(aes(colour = Response), size = 3, position = position_fill(vjust = 0.5)) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = NICHE_colors[1:5]) +
+  scale_colour_manual(values=c("white","black","black","white","black"), guide = FALSE) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(size = 6, angle = 45, hjust = 1))
+```
+
+```{r}
+Restraints %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Restraints_P) %>%
+  unique() %>%
+  ggplot(aes(x = Restraints_P)) + geom_histogram(fill = "#314383", color = "white", binwidth = 0.2) +
+  scale_x_continuous(limits=c(0,4)) +
+  labs(x = "Restraints Knowledge", y = "Nurses") +
+  theme_minimal()
+```
+
+## Skin
+```{r}
+Skin <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_6, Q20_37, Q20_38, Q20_43, Q20_44, Q20_46, Q20_47) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response = case_when(Response %in% c("1. Strongly Disgree","1. Strongly disagree","1. Strongly Disagree") ~ "Strongly Disagree",
+                              Response %in% c("2. Disagree") ~ "Disagree",
+                              Response %in% c("3. Neither Agree nor Disagree","3. Neither agree nor disagree","3. Neither Agree or Disagree") ~ "Neither Agree nor Disagree",
+                              Response %in% c("4. Agree") ~ "Agree",
+                              Response %in% c("5. Strongly Agree","5. Strongly agree") ~ "Strongly Agree"),
+         Response = ordered(Response, levels = c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree")),
+         Response_Num = case_when(Response == "Strongly Disagree" ~ 0,
+                                  Response == "Disagree" ~ 1,
+                                  Response == "Neither Agree nor Disagree" ~ 2,
+                                  Response == "Agree" ~ 3,
+                                  Response == "Strongly Agree" ~ 4),
+         Item = case_when(Item == "Q5_6" ~ "PI prevention treatments",
+                          Item == "Q20_37" ~ "Heels",
+                          Item == "Q20_38" ~ "PI and osteomyelitis",
+                          Item == "Q20_43" ~ "Assess PI",
+                          Item == "Q20_44" ~ "Most PIs are preventable",
+                          Item == "Q20_46" ~ "Massaging bony prominences",
+                          Item == "Q20_47" ~ "Daily skin assessments")) %>%
+  group_by(Hospital.ID) %>%
+  mutate(Skin_H = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID) %>%
+  mutate(Skin_U = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID, Participant.ID) %>%
+  mutate(Skin_P = mean(Response_Num)) %>%
+  ungroup() %>%
+  mutate(Skin_T = mean(Response_Num))
+  
+Skin %>%
+  count(Item, Response) %>%
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, Percent)) %>%
+  ungroup() %>%
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 7, color = "white") +
+  geom_text(aes(colour = Response), size = 3, position = position_fill(vjust = 0.5)) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = NICHE_colors[1:5]) +
+  scale_colour_manual(values=c("white","black","black","white","black"), guide = FALSE) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(size = 6, angle = 45, hjust = 1))
+```
+
+```{r}
+Skin %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Skin_P) %>%
+  unique() %>%
+  ggplot(aes(x = Skin_P)) + geom_histogram(fill = "#314383", color = "white", binwidth = 0.2) +
+  scale_x_continuous(limits=c(0,4)) +
+  labs(x = "Skin Knowledge", y = "Nurses") +
+  theme_minimal()
+```
+
+## Incontinence
+```{r}
+Incontinence <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_3, Q5_4, Q5_5, Q20_7, Q20_8, Q20_9, Q20_12, Q20_13, Q20_14) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response = case_when(Response %in% c("1. Strongly Disgree","1. Strongly disagree","1. Strongly Disagree") ~ "Strongly Disagree",
+                              Response %in% c("2. Disagree") ~ "Disagree",
+                              Response %in% c("3. Neither Agree nor Disagree","3. Neither agree nor disagree","3. Neither Agree or Disagree") ~ "Neither Agree nor Disagree",
+                              Response %in% c("4. Agree") ~ "Agree",
+                              Response %in% c("5. Strongly Agree","5. Strongly agree") ~ "Strongly Agree"),
+         Response = ordered(Response, levels = c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree")),
+         Response_Num = case_when(Item %in% c("Q20_12","Q20_13") & Response == "Strongly Disagree" ~ 4,
+                                  Item %in% c("Q20_12","Q20_13") & Response == "Disagree" ~ 3,
+                                  Item %in% c("Q20_12","Q20_13") & Response == "Neither Agree nor Disagree" ~ 2,
+                                  Item %in% c("Q20_12","Q20_13") & Response == "Agree" ~ 1,
+                                  Item %in% c("Q20_12","Q20_13") & Response == "Strongly Agree" ~ 0,
+                                  Response == "Strongly Disagree" ~ 0,
+                                  Response == "Disagree" ~ 1,
+                                  Response == "Neither Agree nor Disagree" ~ 2,
+                                  Response == "Agree" ~ 3,
+                                  Response == "Strongly Agree" ~ 4),
+         Item = case_when(Item == "Q5_3" ~ "Incontinence pads",
+                          Item == "Q5_4" ~ "Adult diapers",
+                          Item == "Q5_5" ~ "Urinary catheters",
+                          Item == "Q20_7" ~ "Incontinence is normal in aging",
+                          Item == "Q20_8" ~ "Kegels",
+                          Item == "Q20_9" ~ "Assess incontinence",
+                          Item == "Q20_12" ~ "Constipation",
+                          Item == "Q20_13" ~ "Avoiding indwelling catheters",
+                          Item == "Q20_14" ~ "Diapers at night")) %>%
+  group_by(Hospital.ID) %>%
+  mutate(Incontinence_H = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID) %>%
+  mutate(Incontinence_U = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID, Participant.ID) %>%
+  mutate(Incontinence_P = mean(Response_Num)) %>%
+  ungroup() %>%
+  mutate(Incontinence_T = mean(Response_Num))
+  
+Incontinence %>%
+  count(Item, Response) %>%
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, Percent)) %>%
+  ungroup() %>%
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 9, color = "white") +
+  geom_text(aes(colour = Response), size = 3, position = position_fill(vjust = 0.5)) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = NICHE_colors[1:5]) +
+  scale_colour_manual(values=c("white","black","black","white","black"), guide = FALSE) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(size = 6, angle = 45, hjust = 1))
+```
+
+```{r}
+Incontinence %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Incontinence_P) %>%
+  unique() %>%
+  ggplot(aes(x = Incontinence_P)) + geom_histogram(fill = "#314383", color = "white", binwidth = 0.2) +
+  scale_x_continuous(limits=c(0,4)) +
+  labs(x = "Incontinence Knowledge", y = "Nurses") +
+  theme_minimal()
+```
+
+## Pain
+```{r}
+Pain <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_9, Q5_23, Q20_15, Q20_17, Q20_18) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response = case_when(Response %in% c("1. Strongly Disgree","1. Strongly disagree","1. Strongly Disagree") ~ "Strongly Disagree",
+                              Response %in% c("2. Disagree") ~ "Disagree",
+                              Response %in% c("3. Neither Agree nor Disagree","3. Neither agree nor disagree","3. Neither Agree or Disagree") ~ "Neither Agree nor Disagree",
+                              Response %in% c("4. Agree") ~ "Agree",
+                              Response %in% c("5. Strongly Agree","5. Strongly agree") ~ "Strongly Agree"),
+         Response = ordered(Response, levels = c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree")),
+         Response_Num = case_when(Item %in% c("Q20_15") & Response == "Strongly Disagree" ~ 4,
+                                  Item %in% c("Q20_15") & Response == "Disagree" ~ 3,
+                                  Item %in% c("Q20_15") & Response == "Neither Agree nor Disagree" ~ 2,
+                                  Item %in% c("Q20_15") & Response == "Agree" ~ 1,
+                                  Item %in% c("Q20_15") & Response == "Strongly Agree" ~ 0,
+                                  Response == "Strongly Disagree" ~ 0,
+                                  Response == "Disagree" ~ 1,
+                                  Response == "Neither Agree nor Disagree" ~ 2,
+                                  Response == "Agree" ~ 3,
+                                  Response == "Strongly Agree" ~ 4),
+         Item = case_when(Item == "Q5_9" ~ "Pain medications",
+                          Item == "Q5_23" ~ "Tricyclic antidepressants for neuropathic pain",
+                          Item == "Q20_15" ~ "Pain is normal in aging",
+                          Item == "Q20_17" ~ "Safe and effective treatment",
+                          Item == "Q20_18" ~ "Assess pain")) %>%
+  group_by(Hospital.ID) %>%
+  mutate(Pain_H = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID) %>%
+  mutate(Pain_U = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID, Participant.ID) %>%
+  mutate(Pain_P = mean(Response_Num)) %>%
+  ungroup() %>%
+  mutate(Pain_T = mean(Response_Num))
+  
+Pain %>%
+  count(Item, Response) %>%
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, Percent)) %>%
+  ungroup() %>%
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 5, color = "white") +
+  geom_text(aes(colour = Response), size = 3, position = position_fill(vjust = 0.5)) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = NICHE_colors[1:5]) +
+  scale_colour_manual(values=c("white","black","black","white","black"), guide = FALSE) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(size = 6, angle = 45, hjust = 1))
+```
+
+```{r}
+Pain %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Pain_P) %>%
+  unique() %>%
+  ggplot(aes(x = Pain_P)) + geom_histogram(fill = "#314383", color = "white", binwidth = 0.2) +
+  scale_x_continuous(limits=c(0,4)) +
+  labs(x = "Pain Knowledge", y = "Nurses") +
+  theme_minimal()
+```
+
+## Delirium
+```{r}
+Delirium <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q20_19, Q20_20, Q20_52, Q20_55, Q20_58) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response = case_when(Response %in% c("1. Strongly Disgree","1. Strongly disagree","1. Strongly Disagree") ~ "Strongly Disagree",
+                              Response %in% c("2. Disagree") ~ "Disagree",
+                              Response %in% c("3. Neither Agree nor Disagree","3. Neither agree nor disagree","3. Neither Agree or Disagree") ~ "Neither Agree nor Disagree",
+                              Response %in% c("4. Agree") ~ "Agree",
+                              Response %in% c("5. Strongly Agree","5. Strongly agree") ~ "Strongly Agree"),
+         Response = ordered(Response, levels = c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree")),
+         Response_Num = case_when(Item %in% c("Q20_19") & Response == "Strongly Disagree" ~ 4,
+                                  Item %in% c("Q20_19") & Response == "Disagree" ~ 3,
+                                  Item %in% c("Q20_19") & Response == "Neither Agree nor Disagree" ~ 2,
+                                  Item %in% c("Q20_19") & Response == "Agree" ~ 1,
+                                  Item %in% c("Q20_19") & Response == "Strongly Agree" ~ 0,
+                                  Response == "Strongly Disagree" ~ 0,
+                                  Response == "Disagree" ~ 1,
+                                  Response == "Neither Agree nor Disagree" ~ 2,
+                                  Response == "Agree" ~ 3,
+                                  Response == "Strongly Agree" ~ 4),
+         Item = case_when(Item == "Q20_19" ~ "Delirium is normal in aging",
+                          Item == "Q20_20" ~ "Assess delirium",
+                          Item == "Q20_52" ~ "Hyperactive delirium poor prognosis",
+                          Item == "Q20_55" ~ "Acute mental status change\ncommon sign of acute illness",
+                          Item == "Q20_58" ~ "Screen for delirium")) %>%
+  group_by(Hospital.ID) %>%
+  mutate(Delirium_H = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID) %>%
+  mutate(Delirium_U = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID, Participant.ID) %>%
+  mutate(Delirium_P = mean(Response_Num)) %>%
+  ungroup() %>%
+  mutate(Delirium_T = mean(Response_Num))
+  
+Delirium %>%
+  count(Item, Response) %>%
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, Percent)) %>%
+  ungroup() %>%
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 5, color = "white") +
+  geom_text(aes(colour = Response), size = 3, position = position_fill(vjust = 0.5)) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = NICHE_colors[1:5]) +
+  scale_colour_manual(values=c("white","black","black","white","black"), guide = FALSE) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(size = 6, angle = 45, hjust = 1))
+```
+
+```{r}
+Delirium %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Delirium_P) %>%
+  unique() %>%
+  ggplot(aes(x = Delirium_P)) + geom_histogram(fill = "#314383", color = "white", binwidth = 0.2) +
+  scale_x_continuous(limits=c(0,4)) +
+  labs(x = "Delirium Knowledge", y = "Nurses") +
+  theme_minimal()
+```
+
+## Dementia
+```{r}
+Dementia <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_20, Q20_22, Q20_26, Q20_29) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response = case_when(Response %in% c("1. Strongly Disgree","1. Strongly disagree","1. Strongly Disagree") ~ "Strongly Disagree",
+                              Response %in% c("2. Disagree") ~ "Disagree",
+                              Response %in% c("3. Neither Agree nor Disagree","3. Neither agree nor disagree","3. Neither Agree or Disagree") ~ "Neither Agree nor Disagree",
+                              Response %in% c("4. Agree") ~ "Agree",
+                              Response %in% c("5. Strongly Agree","5. Strongly agree") ~ "Strongly Agree"),
+         Response = ordered(Response, levels = c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree")),
+         Response_Num = case_when(Response == "Strongly Disagree" ~ 0,
+                                  Response == "Disagree" ~ 1,
+                                  Response == "Neither Agree nor Disagree" ~ 2,
+                                  Response == "Agree" ~ 3,
+                                  Response == "Strongly Agree" ~ 4),
+         Item = case_when(Item == "Q5_20" ~ "Tactile and auditory stimulation",
+                          Item == "Q20_22" ~ "Dementia and depression",
+                          Item == "Q20_26" ~ "Assess behavioral symptoms",
+                          Item == "Q20_29" ~ "Non-pharmacologic treatments")) %>%
+  group_by(Hospital.ID) %>%
+  mutate(Dementia_H = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID) %>%
+  mutate(Dementia_U = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID, Participant.ID) %>%
+  mutate(Dementia_P = mean(Response_Num)) %>%
+  ungroup() %>%
+  mutate(Dementia_T = mean(Response_Num))
+  
+Dementia %>%
+  count(Item, Response) %>%
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, Percent)) %>%
+  ungroup() %>%
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 4, color = "white") +
+  geom_text(aes(colour = Response), size = 3, position = position_fill(vjust = 0.5)) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = NICHE_colors[1:5]) +
+  scale_colour_manual(values=c("white","black","black","white","black"), guide = FALSE) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(size = 6, angle = 45, hjust = 1))
+```
+
+```{r}
+Dementia %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Dementia_P) %>%
+  unique() %>%
+  ggplot(aes(x = Dementia_P)) + geom_histogram(fill = "#314383", color = "white", binwidth = 0.2) +
+  scale_x_continuous(limits=c(0,4)) +
+  labs(x = "Dementia Knowledge", y = "Nurses") +
+  theme_minimal()
+```
+
+## Nutrition/Hydration
+```{r}
+Nutrition <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_11, Q5_13, Q5_19, Q20_33, Q20_51) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response = case_when(Response %in% c("1. Strongly Disgree","1. Strongly disagree","1. Strongly Disagree") ~ "Strongly Disagree",
+                              Response %in% c("2. Disagree") ~ "Disagree",
+                              Response %in% c("3. Neither Agree nor Disagree","3. Neither agree nor disagree","3. Neither Agree or Disagree") ~ "Neither Agree nor Disagree",
+                              Response %in% c("4. Agree") ~ "Agree",
+                              Response %in% c("5. Strongly Agree","5. Strongly agree") ~ "Strongly Agree"),
+         Response = ordered(Response, levels = c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree")),
+         Response_Num = case_when(Response == "Strongly Disagree" ~ 0,
+                                  Response == "Disagree" ~ 1,
+                                  Response == "Neither Agree nor Disagree" ~ 2,
+                                  Response == "Agree" ~ 3,
+                                  Response == "Strongly Agree" ~ 4),
+         Item = case_when(Item == "Q5_11" ~ "Oral/Mouth care",
+                          Item == "Q5_13" ~ "Tube and enteral feedings",
+                          Item == "Q5_19" ~ "Hand over hand feeding",
+                          Item == "Q20_33" ~ "Assess nutritional status",
+                          Item == "Q20_51" ~ "Skin turgor and hydration")) %>%
+  group_by(Hospital.ID) %>%
+  mutate(Nutrition_H = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID) %>%
+  mutate(Nutrition_U = mean(Response_Num)) %>%
+  group_by(Hospital.ID, Unit.ID, Participant.ID) %>%
+  mutate(Nutrition_P = mean(Response_Num)) %>%
+  ungroup() %>%
+  mutate(Nutrition_T = mean(Response_Num))
+  
+Nutrition %>%
+  count(Item, Response) %>%
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, Percent)) %>%
+  ungroup() %>%
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 5, color = "white") +
+  geom_text(aes(colour = Response), size = 3, position = position_fill(vjust = 0.5)) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = NICHE_colors[1:5]) +
+  scale_colour_manual(values=c("white","black","black","white","black"), guide = FALSE) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(size = 6, angle = 45, hjust = 1))
+```
+
+```{r}
+Nutrition %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Nutrition_P) %>%
+  unique() %>%
+  ggplot(aes(x = Nutrition_P)) + 
+  geom_histogram(fill = "#314383", color = "white", binwidth = 0.2) +
+  scale_x_continuous(limits=c(0,4)) +
+  labs(x = "Nutrition/Hydration Knowledge", y = "Nurses") +
+  theme_minimal()
+```
+
+# Coefficient Alpha for Scales
+## Resource Availability
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q8_1, Q8_2, Q8_3, Q8_4, Q8_5, Q8_6, Q8_9, Q8_10, Q8_11, Q8_7, Q8_12) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+myalpha[1:4] %>%pander()
+```
+
+## Age-Sensitive Care
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q7_1, Q7_2, Q7_4, Q7_5, Q7_7, Q7_8, Q7_9, Q7_10, Q7_11, Q7_12, Q7_13) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+myalpha[1:4] %>%pander()
+```
+
+## Implementation Climate
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q7_26, Q7_27, Q7_28, Q7_29, Q7_30) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+myalpha[1:4] %>%pander()
+```
+
+## Organization Values
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q7_19, Q7_20, Q7_21, Q7_22, Q7_25) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+myalpha[1:4] %>%pander()
+```
+
+## Falls Knowledge
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_7, Q5_8, Q5_14, Q5_21, Q5_24, Q5_25, Q5_26, Q5_33, Q20_31, Q20_32) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+myalpha[1:4] %>%pander()
+```
+
+## Restraints Knowledge
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q20_40, Q20_42, Q20_48) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+myalpha[1:4] %>%pander()
+```
+
+* Note: Q5_1 removed to improve reliability
+
+## Skin Knowledge
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q20_43, Q20_44, Q20_47) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+myalpha[1:4] %>%pander()
+```
+
+* Note: Q5_6, Q20_37, Q20_38, and Q20_46 removed to improve reliability
+
+## Incontinence Knowledge
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_3, Q5_4, Q5_5) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+myalpha[1:4] %>%pander()
+```
+
+* Note: Q20_7, Q20_8, Q20_9, Q20_12, Q20_13, and Q20_14 removed to improve reliability
+
+## Pain Knowledge
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_9, Q5_23, Q20_17, Q20_18) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+myalpha[1:4] %>%pander()
+```
+
+* Note: Q20_15 removed to improve reliability
+
+## Delirium Knowledge
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q20_20, Q20_58) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+myalpha[1:4] %>%pander()
+```
+
+* Note: Q20_19, Q20_51, and Q20_55 removed to improve reliability
+
+## Dementia Knowledge
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q20_26, Q20_29) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+myalpha[1:4] %>%pander()
+```
+
+* Note: Q5_20 and Q20_22 removed to improve reliability
+
+## Nutrition/Hydration Knowlede
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_11, Q5_19) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+myalpha[1:4] %>%pander()
+```
+
+* Note: Q5_13, Q20_33, and Q20_51 removed to improve reliability
+
+# Factor Analysis
+## Resource Availability
+```{r}
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         RA_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  na.omit() %>%
+  factanal(factors = 1)
+```
+
+## Age-Sensitive Care
+```{r}
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         ASC_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  na.omit() %>%
+  factanal(factors = 1)
+```
+
+## Implementation Climate
+```{r}
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         IC_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  na.omit() %>%
+  factanal(factors = 1)
+```
+
+## Organizational Values
+```{r}
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         OV_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  na.omit() %>%
+  factanal(factors = 1)
+```
+
+## Falls
+```{r}
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Falls_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  na.omit() %>%
+  factanal(factors = 1)
+```
+
+## Restraints
+```{r}
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Restraints_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  na.omit() %>%
+  factanal(factors = 1)
+```
+
+* Q20_42 (alternatives to restraints) may be the best single-item summary of this domain as it has the highest loading.
+
+## Skin
+```{r}
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Skin_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  na.omit() %>%
+  factanal(factors = 2)
+```
+
+* Q20_43 (assess PI) may be the best single-item summary of this domain as it has the least uniqueness (most in common with other items).
+
+## Incontinence
+```{r}
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Incontinence_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  na.omit() %>%
+  factanal(factors = 3)
+```
+
+* Q5_4 (adult diapers) may be the best single-item summary of this domain as it has the least uniqueness (most in common with other items).
+
+## Pain
+```{r}
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Pain_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  na.omit() %>%
+  factanal(factors = 2)
+```
+
+* Q20_18 (assess pain) may be the best single-item summary of this domain as it has the least uniqueness (most in common with other items).
+
+## Delirium
+```{r}
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Delirium_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  na.omit() %>%
+  factanal(factors = 1)
+```
+
+* Q20_58 (screen for delirium) may be the best single-item summary of this domain as it has the highest loading.
+
+## Dementia
+```{r}
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Dementia_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  na.omit() %>%
+  factanal(factors = 1)
+```
+
+* Q20_29 (non-pharmacologic treatments) may be the best single-item summary of this domain as it has the highest loading.
+
+## Nutrition/Hydration
+```{r}
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Nutrition_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  na.omit() %>%
+  factanal(factors = 1)
+```
+
+* Q5_19 (hand over hand feeding) may be the best single-item summary of this domain as it has the highest loading.
+
+
+```{r, echo=FALSE, results="hide"}
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Restraints_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1,
+         Response_N = car::recode(Response_N, "NA = -9")) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  write.table(file = "c:/Dbox/GIAP-Redesign Project_2016-2017/Chuck/restraints.dat", row.names = FALSE, col.names = FALSE, sep = ",")
+
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Skin_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1,
+         Response_N = car::recode(Response_N, "NA = -9")) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  write.table(file = "c:/Dbox/GIAP-Redesign Project_2016-2017/Chuck/skin.dat", row.names = FALSE, col.names = FALSE, sep = ",")
+
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Incontinence_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1,
+         Response_N = car::recode(Response_N, "NA = -9")) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  write.table(file = "c:/Dbox/GIAP-Redesign Project_2016-2017/Chuck/incontinence.dat", row.names = FALSE, col.names = FALSE, sep = ",")
+
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Pain_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1,
+         Response_N = car::recode(Response_N, "NA = -9")) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  write.table(file = "c:/Dbox/GIAP-Redesign Project_2016-2017/Chuck/pain.dat", row.names = FALSE, col.names = FALSE, sep = ",")
+
+
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Delirium_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1,
+         Response_N = car::recode(Response_N, "NA = -9")) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  write.table(file = "c:/Dbox/GIAP-Redesign Project_2016-2017/Chuck/delirium.dat", row.names = FALSE, col.names = FALSE, sep = ",")
+
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Dementia_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1,
+         Response_N = car::recode(Response_N, "NA = -9")) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  write.table(file = "c:/Dbox/GIAP-Redesign Project_2016-2017/Chuck/dementia.dat", row.names = FALSE, col.names = FALSE, sep = ",")
+
+giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Nutrition_items) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1,
+         Response_N = car::recode(Response_N, "NA = -9")) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  write.table(file = "c:/Dbox/GIAP-Redesign Project_2016-2017/Chuck/nutrition.dat", row.names = FALSE, col.names = FALSE, sep = ",")
+```
+
+
+
+
+
