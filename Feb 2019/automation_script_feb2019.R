@@ -11,7 +11,7 @@ p_load(tidyverse, ggplot2, pander, knitr, scales, readxl, kableExtra, rmarkdown,
 
 ######################
 # Loading Survey Data and Correct Knowledge Questions
-giap <- read_sav("C:/Users/tg1482/Desktop/GIAP/Feb 2019/NICHE-GIAP - Cohort 4 - Alldata.sav")
+giap <- read_sav("Feb 2019 Data.sav")
 ######################
 
 ######################
@@ -59,3 +59,4 @@ na_to_zero <- function(val){
 ######################
 
 name <- "Kent Hospital"
+
