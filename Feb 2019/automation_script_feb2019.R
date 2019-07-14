@@ -18,6 +18,7 @@ giap <- read_sav("Feb 2019 Data.sav")
 # Changing Variable Names and Structure
 giap <- giap %>% 
   rename("Hospital.Name" = "facilityName") %>% 
+  rename("Hospital.ID" = "facilityID")
   rename("Unit" = "primaryNursingUnit") %>% 
   mutate(Hospital.Name = as.factor(Hospital.Name),
          Unit = as.factor(Unit))
@@ -60,3 +61,4 @@ na_to_zero <- function(val){
 
 name <- "Kent Hospital"
 
+render("Feb 2019/GIAP Individual Report.Rmd", output_file = paste0("Feb 2019/results/", name, ".html"))

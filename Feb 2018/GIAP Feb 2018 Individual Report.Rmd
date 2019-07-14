@@ -9,17 +9,15 @@ nocite: |
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 6, fig.asp = 0.618, out.width = "80%", fig.align = "center", dev='svg', fig.show='hold')
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 6, fig.asp = 0.618, out.width = "80%", fig.align = "center", fig.show='hold')
 ```
 
 ```{r initialize}
 hospital_names <- unique(giap$`Hospital.Name`)[!is.na(unique(giap$`Hospital.Name`))]
-
-id <- unique(giap$Hospital.Name[giap$Hospital.Name==name] %>% na.omit())
 ```
 
 ```{r, fig.align = "left", out.width='15%'}
-knitr::include_graphics("NICHE_logo.jpg")
+#knitr::include_graphics("NICHE_logo.jpg")
 ```
 
 
