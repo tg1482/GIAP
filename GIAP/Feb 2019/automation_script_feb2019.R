@@ -53,6 +53,8 @@ na_to_zero <- function(val){
 ######################
 # Automating report generation across all hospitals
 
+cohort <- "February 2019"
+
 #for(name in hospital.names){
 #  render("GIAP Fall 2018 Cohort Individual Report.Rmd",
 #         output_file=paste0("C:/Users/tg1482/Desktop/GIAP/Oct 2018/results/", name, ".html"))

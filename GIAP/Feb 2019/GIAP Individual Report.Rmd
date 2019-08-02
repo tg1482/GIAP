@@ -27,7 +27,7 @@ knitr::include_graphics("NICHE_logo.jpg")
 <center>
 # **Nurses Improving Care for Healthsystem Elders**
 ## **Geriatric Institutional Assessment Profile Report**
-### **February 2019 Cohort**
+### **`r cohort` Cohort**
 </center>
 
 #### **`r name`**
@@ -45,7 +45,7 @@ The GIAP (v.8) provides clinical leaders with information about nurses' percepti
   
 **How to Use the GIAP Results to Improve Nursing Care for Older Adults**
 
-The results are reported in two sections. The first section summarizes nurses' knowledge about the geriatric syndromes of delirium, falls, pressure injuries, and incontinence and the nursing problems of pain, nutrition and hydration, restraint use, and managing behaviors associated with dementia and cognitive decline. The second section summarizes nurses' views about the unit environment to support age-friendly care.
+The results are reported in two sections. The first section summarizes nurses' knowledge about the geriatric syndromes of delirium, falls, pressure injuries, and incontinence and the nursing problems of sleep, nutrition and hydration, medication management, and managing behaviors associated with dementia and cognitive decline. The second section summarizes nurses' views about the unit environment to support age-friendly care.
 
 We use the quality improvement convention of the red, yellow and green stop light colors to present the GIAP results. Where applicable, the mean score for the cohort and your hospital are marked with an asterisks (*). As you review the diagrams, yellow and green denote higher performance on each measure.   
 
@@ -319,38 +319,6 @@ giap %>%
 
 ```{r}
 giap %>%
-  rename(GRN = Q40) %>%
-  count(GRN) %>%
-  mutate(Percent = round(n / sum(n) * 100, 1),
-         GRN = case_when(GRN == 1 ~ "Yes",
-                         GRN == 2 ~ "No",
-                         GRN == 9 ~ "Prefer not to Report",
-                         is.na(GRN) ~ "Prefer not to Report"),
-         GRN = factor(GRN, levels = c("Prefer not to Report", "No", "Yes"))) %>%
-  select(-n) %>% 
-  full_join(giap %>%
-              filter(Hospital.Name ==name) %>%
-              rename(GRN = Q40) %>%
-              count(GRN) %>%
-              mutate(Percent = round(n / sum(n) * 100, 1),
-                     GRN = case_when(GRN == 1 ~ "Yes",
-                                     GRN == 2 ~ "No",
-                                     GRN == 9 ~ "Prefer not to Report",
-                                     is.na(GRN) ~ "Prefer not to Report"),
-                     GRN = factor(GRN, levels = c("Prefer not to Report", "No", "Yes"))) %>%
-              #arrange(desc(n)) %>% 
-              select(-n), by = "GRN") %>%
-  setNames(c("Completed NICHE GRN Program", "Cohort (%)", "Hospital (%)")) %>%     
-  mutate_if(is.numeric, na_to_zero) %>%
-  kable(format = "html", table.attr = "style='width:90%;'") %>% 
-  kable_styling() %>% 
-  column_spec(1, width = "30em") %>%
-  column_spec(2, width = "10em") %>% 
-  column_spec(3, width = "10em")
-```
-
-```{r}
-giap %>%
   rename(Enroll = Q25) %>%
   count(Enroll) %>%
   mutate(Percent = round(n / sum(n) * 100, 1),
@@ -377,38 +345,6 @@ giap %>%
               #arrange(desc(n)) %>% 
               select(-n), by = "Enroll") %>%
   setNames(c("Enrolled in Formal Nursing Education Program", "Cohort (%)", "Hospital (%)")) %>%     
-  mutate_if(is.numeric, na_to_zero) %>%
-  kable(format = "html", table.attr = "style='width:90%;'") %>% 
-  kable_styling() %>% 
-  column_spec(1, width = "30em") %>%
-  column_spec(2, width = "10em") %>% 
-  column_spec(3, width = "10em")
-```
-
-```{r}
-giap %>%
-  rename(NATLCERT = Q26) %>%
-  count(NATLCERT) %>%
-  mutate(Percent = round(n / sum(n) * 100, 1),
-         NATLCERT = case_when(NATLCERT == 1 ~ "Yes",
-                         NATLCERT == 2 ~ "No",
-                         NATLCERT == 9 ~ "Prefer not to Report",
-                         is.na(NATLCERT) ~ "Prefer not to Report"),
-         NATLCERT = factor(NATLCERT, levels = c("Prefer not to Report", "No", "Yes"))) %>%
-  select(-n) %>% 
-  full_join(giap %>%
-              filter(Hospital.Name ==name) %>%
-              rename(NATLCERT = Q26) %>%
-              count(NATLCERT) %>%
-              mutate(Percent = round(n / sum(n) * 100, 1),
-                     NATLCERT = case_when(NATLCERT == 1 ~ "Yes",
-                                     NATLCERT == 2 ~ "No",
-                                     NATLCERT == 9 ~ "Prefer not to Report",
-                                     is.na(NATLCERT) ~ "Prefer not to Report"),
-                     NATLCERT = factor(NATLCERT, levels = c("Prefer not to Report", "No", "Yes"))) %>%
-              #arrange(desc(n)) %>% 
-              select(-n), by = "NATLCERT") %>%
-  setNames(c("Completed National Specialty Certification and/or Nurse Practitioner Certification", "Cohort (%)", "Hospital (%)")) %>%     
   mutate_if(is.numeric, na_to_zero) %>%
   kable(format = "html", table.attr = "style='width:90%;'") %>% 
   kable_styling() %>% 
@@ -774,7 +710,7 @@ graph_data %>%
 
 **Baseline Knowledge of the Geriatric Syndromes**
 
-The following diagram illustrates nurses' knowledge of evidence-based interventions to manage common problems experienced by older adults. The results for the Spring 2018 cohort and `r name` are presented below. The mean score for the correct answer for each clinical condition included in the GIAP is marked with an asterisks (*). A mean score of 80% or higher reflects nurses' mastery of the clinical knowledge needed to effectively assess, diagnose, and manage the geriatric syndromes and common nursing problems experienced by older adults during hospitalization.  
+The following diagram illustrates nurses' knowledge of evidence-based interventions to manage common problems experienced by older adults. The results for the `r cohort` cohort and `r name` are presented below. The mean score for the correct answer for each clinical condition included in the GIAP is marked with an asterisks (*). A mean score of 80% or higher reflects nurses' mastery of the clinical knowledge needed to effectively assess, diagnose, and manage the geriatric syndromes and common nursing problems experienced by older adults during hospitalization.  
 
 ```{r}
 knowledge <- giap %>%
@@ -1679,9 +1615,9 @@ giap %>%
 #### **Summary and Recommendations**
 </center>
 
-High quality care for older adults relies on two factors; a highly competent nursing workforce and care delivery processes that take the unique needs of older adults into account.  The GIAP evaluates nurses' knowledge and perceptions of the care environment to support high quality care for older adults.   The GIAP provides leaders with information to develop population-specific care for older adults at the nursing unit, hospital, and health system levels.
+High quality care for older adults relies on two factors; a highly competent nursing workforce and care delivery processes that take the unique needs of older adults into account. The GIAP evaluates nurses' knowledge and perceptions of the care environment to support high quality care for older adults. The GIAP provides leaders with information to develop population-specific care for older adults at the nursing unit, hospital, and health system levels.
 
-The results of the GIAP for the Spring 2018 cohort suggests that nurses' knowledge regarding evidence-based practices to care for older adults is aligned with national trends [@author3]. There are opportunities to improve nurses' knowledge to both assess and use evidence-based interventions to address the problems of nutrition and hydration, incontinence, and managing behaviors associated with dementia and cognitive decline among the population of older adults receiving care at your hospital. Some poor practices or uncertainty regarding the best interventions to promote optimal health outcomes for older adults were also identified.
+The results of the GIAP for the `r cohort` cohort suggests that nurses' knowledge regarding evidence-based practices to care for older adults is aligned with national trends [@author3]. There are opportunities to improve nurses' knowledge to both assess and use evidence-based interventions to address the problems of nutrition and hydration, incontinence, and managing behaviors associated with dementia and cognitive decline among the population of older adults receiving care at your hospital. Some poor practices or uncertainty regarding the best interventions to promote optimal health outcomes for older adults were also identified.
 
 In general, nurses perceive that organizational factors impede progress to deliver age-sensitive care. The participating staff identified a lack of time to both care for older adults and to devote to clinical practice change projects as barriers to providing age-friendly care on their units. The participating nurses also reported that there is a lack of equipment and professional expertise available to them on a daily basis to support high-quality care for older adults. Finally, participants reported that there is room for nurse managers and clinical leaders to communicate the importance of caring for older adults and to determine ways to integrate quality improvement and education into daily practice to develop clinical expertise and use evidence-based practices to care for older adults. 
     
@@ -1690,7 +1626,7 @@ In general, nurses perceive that organizational factors impede progress to deliv
 **Summary**
 </center>
 
-This diagram summarizes the participating hospitals' performance on the knowledge and practice environment components of the GIAP survey. The majority of hospitals participating in the Spring 2018 survey fall within the **Early Quadrant**. Your hospital is marked with a bold dot. 
+This diagram summarizes the participating hospitals' performance on the knowledge and practice environment components of the GIAP survey. The majority of hospitals participating in the `r cohort` survey fall within the **Early Quadrant**. Your hospital is marked with a bold dot. 
 
 
 ```{r}
@@ -1858,7 +1794,7 @@ The GIAP is assesses the following components of the nursing practice environmen
 
 **Geriatric Nursing Knowledge**
 
-Nurses' abilities to recognize the multifactorial clinical problems commonly experienced by older adults and appropriately intervene is integral to improving clinical outcomes for older adults. The GIAP assess nurses' knowledge about evidence-based interventions to manage the geriatric syndromes of skin injuries, incontinence, falls, delirium, and the nursing problems of managing dementia behaviors, restraint use, nutrition and hydration, and pain management. A sample question from this section is: "Medications are the only way to treat behavioral symptoms in persons living with dementia. 
+Nurses' abilities to recognize the multifactorial clinical problems commonly experienced by older adults and appropriately intervene is integral to improving clinical outcomes for older adults. The GIAP assess nurses' knowledge about evidence-based interventions to manage the geriatric syndromes of skin injuries, incontinence, falls, delirium, and the nursing problems of managing dementia behaviors, sleep, nutrition and hydration, and medication management. A sample question from this section is: "Medications are the only way to treat behavioral symptoms in persons living with dementia."
 
 **Specialized Resources**
 
