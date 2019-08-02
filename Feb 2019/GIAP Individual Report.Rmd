@@ -9,7 +9,8 @@ nocite: |
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 6, fig.asp = 0.618, out.width = "80%", fig.align = "center", fig.show='hold')
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 6, fig.asp = 0.618,
+                      out.width = "80%", fig.align = "center", fig.show='hold')
 ```
 
 ```{r initialize}
@@ -17,11 +18,6 @@ hospital_names <- unique(giap$`Hospital.Name`)[!is.na(unique(giap$`Hospital.Name
 
 id <- unique(giap$Hospital.ID[giap$Hospital.Name==name] %>% na.omit())
 ```
-
-```{r, fig.align = "left", out.width='15%'}
-#knitr::include_graphics("NICHE_logo.jpg")
-```
-
 
 <center>
 # **Nurses Improving Care for Healthsystem Elders**
@@ -58,8 +54,6 @@ In the final section of this report, we offer recommendations for how to use the
 
 **Participants:** The data included in this report were collected between `r min(lubridate::month(giap$startDate,label = TRUE))`-`r min(lubridate::year(giap$startDate))` and `r max(lubridate::month(giap$startDate,label = TRUE))`-`r max(lubridate::year(giap$startDate))`.  A total of `r nrow(giap %>% filter(Hospital.Name==name))` nurses at `r name` provided compete data for the questions included in this report. The demographic characteristics for the participating nursing staff from `r name` are summarized in the following tables.
 
-**Gender**
-
 ```{r}
 giap %>%
   filter(!is.na(Q21))%>%
@@ -71,7 +65,7 @@ giap %>%
                             Gender == 3 ~ "Prefer not to Report",
                             Gender == 9 ~ "Prefer not to Report"),
          Gender = factor(Gender, levels = c("Prefer not to Report", "Male", "Female"))) %>%
-  arrange(desc(n)) %>% rename(Count = n) %>% 
+  arrange(desc(n)) %>% select(-n) %>% 
   full_join(giap %>%
               filter(Hospital.Name ==name, !is.na(Q21)) %>%
               rename(Gender = Q21) %>%
@@ -82,22 +76,16 @@ giap %>%
                                         Gender == 3 ~ "Prefer not to Report",
                                         Gender == 9 ~ "Prefer not to Report"),
                      Gender = factor(Gender, levels = c("Prefer not to Report", "Male", "Female"))) %>%
-              #arrange(desc(n)) %>% 
-              rename(Count = n), by = "Gender") %>%
-  setNames(c("Gender", "Numbers", "Percentage", "Numbers", "Percentage")) %>%     
+              select(-n), by = "Gender") %>%
+  setNames(c("Gender", "Cohort (%)", "Hospital (%)")) %>%     
   apply(MARGIN = 2, function (x) ifelse(is.na(x), 0, x)) %>% as.data.frame() %>% 
-  kable(format = "html") %>% 
+  kable(format = "html", table.attr = "style='width:90%;'") %>% 
   kable_styling() %>% 
-  add_header_above(c(" " = 1, "Cohort" = 2, "Hospital" = 2)) %>% 
   column_spec(1, width = "30em") %>%
   column_spec(2, width = "10em") %>% 
-  column_spec(3, width = "10em") %>% 
-  column_spec(4, width = "10em") %>% 
-  column_spec(5, width = "10em")
+  column_spec(3, width = "10em")
 ```
 
-
-**Ethnicity**
 
 ```{r}
 giap %>%
@@ -196,8 +184,6 @@ giap %>%
 ```
 
 
-**Years of Practice Experience**
-
 ```{r}
 giap %>% 
   select(Q2) %>% 
@@ -253,7 +239,7 @@ giap %>%
   rename(Experience = Term) %>% 
   select(-Cat), by = "Experience") %>%
   mutate_if(is.numeric, na_to_zero) %>%
-  setNames(c("Experience", "Cohort (%)", "Hospital (%)")) %>%    
+  setNames(c("Years of Practice Experience", "Cohort (%)", "Hospital (%)")) %>%    
   as.data.frame() %>% 
   kable(format = "html", table.attr = "style='width:90%;'") %>% 
   kable_styling() %>% 
@@ -261,8 +247,6 @@ giap %>%
   column_spec(2, width = "10em") %>% 
   column_spec(3, width = "10em")
 ```
-
-**Years working for Employer**
 
 ```{r}
 giap %>% 
@@ -319,7 +303,7 @@ giap %>%
   rename(Experience = Term) %>% 
   select(-Cat), by = "Experience") %>%
   mutate_if(is.numeric, na_to_zero) %>%
-  setNames(c("Years Worked", "Cohort (%)", "Hospital (%)")) %>%    
+  setNames(c("Years working for Employer", "Cohort (%)", "Hospital (%)")) %>%    
   as.data.frame() %>% 
   kable(format = "html", table.attr = "style='width:90%;'") %>% 
   kable_styling() %>% 
@@ -327,8 +311,6 @@ giap %>%
   column_spec(2, width = "10em") %>% 
   column_spec(3, width = "10em")
 ```
-
-**Completed NICHE GRN Program**
 
 ```{r}
 giap %>%
@@ -340,7 +322,7 @@ giap %>%
                          GRN == 9 ~ "Prefer not to Report",
                          is.na(GRN) ~ "Prefer not to Report"),
          GRN = factor(GRN, levels = c("Prefer not to Report", "No", "Yes"))) %>%
-  rename(Count = n) %>% 
+  select(-n) %>% 
   full_join(giap %>%
               filter(Hospital.Name ==name) %>%
               rename(GRN = Q40) %>%
@@ -352,20 +334,15 @@ giap %>%
                                      is.na(GRN) ~ "Prefer not to Report"),
                      GRN = factor(GRN, levels = c("Prefer not to Report", "No", "Yes"))) %>%
               #arrange(desc(n)) %>% 
-              rename(Count = n), by = "GRN") %>%
-  setNames(c("Completed GRN", "Numbers", "Percentage", "Numbers", "Percentage")) %>%     
+              select(-n), by = "GRN") %>%
+  setNames(c("Completed NICHE GRN Program", "Cohort (%)", "Hospital (%)")) %>%     
   apply(MARGIN = 2, function (x) ifelse(is.na(x), 0, x)) %>% as.data.frame() %>% 
-  kable(format = "html") %>% 
+  kable(format = "html", table.attr = "style='width:90%;'") %>% 
   kable_styling() %>% 
-  add_header_above(c(" " = 1, "Cohort" = 2, "Hospital" = 2)) %>% 
   column_spec(1, width = "30em") %>%
   column_spec(2, width = "10em") %>% 
-  column_spec(3, width = "10em") %>% 
-  column_spec(4, width = "10em") %>% 
-  column_spec(5, width = "10em")
+  column_spec(3, width = "10em")
 ```
-
-**Currently enrolled in a full-time or part-time formal nursing education program**
 
 ```{r}
 giap %>%
@@ -379,7 +356,7 @@ giap %>%
                          Enroll == 9 ~ "Prefer not to Report",
                          is.na(Enroll) ~ "Prefer not to Report"),
          Enroll = factor(Enroll, levels = c("Prefer not to Report", "No", "Yes, part-time", "Yes, full-time"))) %>%
-  rename(Count = n) %>% 
+  select(-n) %>% 
   full_join(giap %>%
               filter(Hospital.Name ==name) %>%
               rename(Enroll = Q25) %>%
@@ -393,20 +370,15 @@ giap %>%
                          is.na(Enroll) ~ "Prefer not to Report"),
                      Enroll = factor(Enroll, levels = c("Prefer not to Report", "No", "Yes, part-time", "Yes, full-time")))%>%
               #arrange(desc(n)) %>% 
-              rename(Count = n), by = "Enroll") %>%
-  setNames(c("Currently Enrolled", "Numbers", "Percentage", "Numbers", "Percentage")) %>%     
+              select(-n), by = "Enroll") %>%
+  setNames(c("Enrolled in Formal Nursing Education Program", "Cohort (%)", "Hospital (%)")) %>%     
   apply(MARGIN = 2, function (x) ifelse(is.na(x), 0, x)) %>% as.data.frame() %>% 
-  kable(format = "html") %>% 
+  kable(format = "html", table.attr = "style='width:90%;'") %>% 
   kable_styling() %>% 
-  add_header_above(c(" " = 1, "Cohort" = 2, "Hospital" = 2)) %>% 
   column_spec(1, width = "30em") %>%
   column_spec(2, width = "10em") %>% 
-  column_spec(3, width = "10em") %>% 
-  column_spec(4, width = "10em") %>% 
-  column_spec(5, width = "10em")
+  column_spec(3, width = "10em")
 ```
-
-**Completed National Specialty Certification and/or Nurse Practitioner Certification**
 
 ```{r}
 giap %>%
@@ -418,7 +390,7 @@ giap %>%
                          NATLCERT == 9 ~ "Prefer not to Report",
                          is.na(NATLCERT) ~ "Prefer not to Report"),
          NATLCERT = factor(NATLCERT, levels = c("Prefer not to Report", "No", "Yes"))) %>%
-  rename(Count = n) %>% 
+  select(-n) %>% 
   full_join(giap %>%
               filter(Hospital.Name ==name) %>%
               rename(NATLCERT = Q26) %>%
@@ -430,20 +402,15 @@ giap %>%
                                      is.na(NATLCERT) ~ "Prefer not to Report"),
                      NATLCERT = factor(NATLCERT, levels = c("Prefer not to Report", "No", "Yes"))) %>%
               #arrange(desc(n)) %>% 
-              rename(Count = n), by = "NATLCERT") %>%
-  setNames(c("Completed Certification", "Numbers", "Percentage", "Numbers", "Percentage")) %>%     
+              select(-n), by = "NATLCERT") %>%
+  setNames(c("Completed National Specialty Certification and/or Nurse Practitioner Certification", "Cohort (%)", "Hospital (%)")) %>%     
   apply(MARGIN = 2, function (x) ifelse(is.na(x), 0, x)) %>% as.data.frame() %>% 
-  kable(format = "html") %>% 
+  kable(format = "html", table.attr = "style='width:90%;'") %>% 
   kable_styling() %>% 
-  add_header_above(c(" " = 1, "Cohort" = 2, "Hospital" = 2)) %>% 
   column_spec(1, width = "30em") %>%
   column_spec(2, width = "10em") %>% 
-  column_spec(3, width = "10em") %>% 
-  column_spec(4, width = "10em") %>% 
-  column_spec(5, width = "10em")
+  column_spec(3, width = "10em")
 ```
-
-**Completed National Specialty Certification in Gerontological Nursing**
 
 ```{r}
 giap %>%
@@ -455,7 +422,7 @@ giap %>%
                          NATLCERT == 9 ~ "Prefer not to Report",
                          is.na(NATLCERT) ~ "Prefer not to Report"),
          NATLCERT = factor(NATLCERT, levels = c("Prefer not to Report", "No", "Yes"))) %>%
-  rename(Count = n) %>% 
+  select(-n) %>% 
   full_join(giap %>%
               filter(Hospital.Name ==name) %>%
               rename(NATLCERT = Q27) %>%
@@ -467,20 +434,16 @@ giap %>%
                                      is.na(NATLCERT) ~ "Prefer not to Report"),
                      NATLCERT = factor(NATLCERT, levels = c("Prefer not to Report", "No", "Yes"))) %>%
               #arrange(desc(n)) %>% 
-              rename(Count = n), by = "NATLCERT") %>%
-  setNames(c("Completed Certification", "Numbers", "Percentage", "Numbers", "Percentage")) %>%     
+              select(-n), by = "NATLCERT") %>%    
+  setNames(c("Completed National Specialty Certification in Gerontological Nursing",
+             "Cohort (%)", "Hospital (%)")) %>%     
   apply(MARGIN = 2, function (x) ifelse(is.na(x), 0, x)) %>% as.data.frame() %>% 
-  kable(format = "html") %>% 
+  kable(format = "html", table.attr = "style='width:90%;'") %>% 
   kable_styling() %>% 
-  add_header_above(c(" " = 1, "Cohort" = 2, "Hospital" = 2)) %>% 
   column_spec(1, width = "30em") %>%
   column_spec(2, width = "10em") %>% 
-  column_spec(3, width = "10em") %>% 
-  column_spec(4, width = "10em") %>% 
-  column_spec(5, width = "10em")
+  column_spec(3, width = "10em")
 ```
-
-**Education**
 
 ```{r}
 giap %>% 
@@ -515,7 +478,7 @@ giap %>%
   mutate(Count = round(Count / sum(Count) * 100, 1)) %>% 
   select(-Q30), by = "Degree") %>% 
   mutate_if(is.numeric, na_to_zero) %>%
-  setNames(c("Degree", "Cohort (%)", "Hospital (%)")) %>%    
+  setNames(c("Education", "Cohort (%)", "Hospital (%)")) %>%    
   as.data.frame() %>% 
   kable(format = "html", table.attr = "style='width:90%;'") %>% 
   kable_styling() %>% 
@@ -523,8 +486,6 @@ giap %>%
   column_spec(2, width = "10em") %>% 
   column_spec(3, width = "10em")
 ```
-
-**Shift Length**
 
 ```{r}
 giap %>% 
@@ -568,8 +529,6 @@ giap %>%
   column_spec(3, width = "10em")
 ```
 
-**Work Schedule**
-
 ```{r}
 giap %>% 
   select(Q36) %>% 
@@ -601,7 +560,7 @@ giap %>%
   arrange(Q36) %>% 
   select(-Q36), by = "Work") %>% 
   mutate_if(is.numeric, na_to_zero) %>%
-  setNames(c("Shift Length", "Cohort (%)", "Hospital (%)")) %>%    
+  setNames(c("Work Schedule", "Cohort (%)", "Hospital (%)")) %>%    
   as.data.frame() %>% 
   kable(format = "html", table.attr = "style='width:90%;'") %>% 
   kable_styling() %>% 
@@ -814,7 +773,7 @@ The following diagram illustrates nurses' knowledge of evidence-based interventi
 
 ```{r}
 knowledge <- giap %>%
-  select(Hospital.ID, CASEID, Q42b, Q43c, Q44c, Q45b, Q46b, Q51b, Q47a, Q48d, Q49c, 
+  select(Hospital.Name, CASEID, Q42b, Q43c, Q44c, Q45b, Q46b, Q51b, Q47a, Q48d, Q49c, 
          Q50b, Q58c, Q59b, Q52a, Q56b, Q53b, Q55c, Q54c, Q57b, Q60c, Q61b) %>% 
   mutate_at(vars("Q42b", "Q43c", "Q44c", "Q45b", "Q46b", "Q51b", "Q47a", "Q48d", "Q49c",
                  "Q50b", "Q58c", "Q59b", "Q52a", "Q56b", "Q53b", "Q55c", "Q54c", "Q57b", 
@@ -855,155 +814,555 @@ knowledge <- giap %>%
 NICHE_colors <- c("#57068C","#6199AE","#FFC842","#314383","#6BAB8A","#F09C5D")
 ```
 
+```{r knowledge}
+#######################
+# Falls
+#######################
+falls_all <- knowledge %>% 
+  select(Hospital.Name, CASEID, Falls) %>% 
+  mutate(Score = Falls/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Falls")
+
+mean_list_all <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Falls") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question"))
+
+Falls <- mean_temp %>% 
+  select(Hospital.Name, Score) %>% 
+  group_by(Hospital.Name) %>% 
+  summarize(Falls_H = mean(Score))
+
+falls_h <- knowledge %>% 
+  filter(Hospital.Name == name) %>% 
+  select(Hospital.Name, CASEID, Falls) %>% 
+  mutate(Score = Falls/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Falls")
+
+mean_list_h <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Falls") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question"))
+
+
+#######################
+# Skin
+#######################
+skin_all <- knowledge %>% 
+  select(Hospital.Name, CASEID, Skin) %>% 
+  mutate(Score = Skin/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Skin")
+
+mean_list_all <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Skin") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_all)
+
+Skin <- mean_temp %>% 
+  select(Hospital.Name, Score) %>% 
+  group_by(Hospital.Name) %>% 
+  summarize(Skin_H = mean(Score))
+
+skin_h <- knowledge %>% 
+  filter(Hospital.Name == name) %>% 
+  select(Hospital.Name, CASEID, Skin) %>% 
+  mutate(Score = Skin/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Skin")
+
+mean_list_h <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Skin") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_h)
+
+#######################
+# Assess
+#######################
+assess_all <- knowledge %>% 
+  select(Hospital.Name, CASEID, Assess) %>% 
+  mutate(Score = Assess/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Assess")
+
+mean_list_all <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Assess") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_all)
+
+Assess <- mean_temp %>% 
+  select(Hospital.Name, Score) %>% 
+  group_by(Hospital.Name) %>% 
+  summarize(Assess_H = mean(Score))
+
+assess_h <- knowledge %>% 
+  filter(Hospital.Name == name) %>% 
+  select(Hospital.Name, CASEID, Assess) %>% 
+  mutate(Score = Assess/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Assess")
+
+mean_list_h <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Assess") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_h)
+
+#######################
+# Delirium
+#######################
+delirium_all <- knowledge %>% 
+  select(Hospital.Name, CASEID, Delirium) %>% 
+  mutate(Score = Delirium,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Delirium")
+
+mean_list_all <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Delirium") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_all)
+
+Delirium <- mean_temp %>% 
+  select(Hospital.Name, Score) %>% 
+  group_by(Hospital.Name) %>% 
+  summarize(Delirium_H = mean(Score))
+
+delirium_h <- knowledge %>% 
+  filter(Hospital.Name == name) %>% 
+  select(Hospital.Name, CASEID, Delirium) %>% 
+  mutate(Score = Delirium,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Delirium")
+
+mean_list_h <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Delirium") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_h)
+
+#######################
+# Urinary
+#######################
+urinary_all <- knowledge %>% 
+  select(Hospital.Name, CASEID, Urinary) %>% 
+  mutate(Score = Urinary/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Urinary")
+
+mean_list_all <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Urinary") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_all)
+
+Urinary <- mean_temp %>% 
+  select(Hospital.Name, Score) %>% 
+  group_by(Hospital.Name) %>% 
+  summarize(Urinary_H = mean(Score))
+
+urinary_h <- knowledge %>% 
+  filter(Hospital.Name == name) %>% 
+  select(Hospital.Name, CASEID, Urinary) %>% 
+  mutate(Score = Urinary/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Urinary")
+
+mean_list_h <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Urinary") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_h)
+
+#######################
+# Nutrition
+#######################
+nutrition_all <- knowledge %>% 
+  select(Hospital.Name, CASEID, Nutrition) %>% 
+  mutate(Score = Nutrition/3,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Nutrition")
+
+mean_list_all <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Nutrition") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_all)
+
+Nutrition <- mean_temp %>% 
+  select(Hospital.Name, Score) %>% 
+  group_by(Hospital.Name) %>% 
+  summarize(Nutrition_H = mean(Score))
+
+nutrition_h <- knowledge %>% 
+  filter(Hospital.Name == name) %>% 
+  select(Hospital.Name, CASEID, Nutrition) %>% 
+  mutate(Score = Nutrition/3,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Nutrition")
+
+mean_list_h <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Nutrition") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_h)
+
+#######################
+# Sleep
+#######################
+sleep_all <- knowledge %>% 
+  select(Hospital.Name, CASEID, Sleep) %>% 
+  mutate(Score = Sleep/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Sleep")
+
+mean_list_all <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Sleep") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_all)
+
+Sleep <- mean_temp %>% 
+  select(Hospital.Name, Score) %>% 
+  group_by(Hospital.Name) %>% 
+  summarize(Sleep_H = mean(Score))
+
+sleep_h <- knowledge %>% 
+  filter(Hospital.Name == name) %>% 
+  select(Hospital.Name, CASEID, Sleep) %>% 
+  mutate(Score = Sleep/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Sleep")
+
+mean_list_h <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Sleep") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_h)
+
+#######################
+# Dementia
+#######################
+dementia_all <- knowledge %>% 
+  select(Hospital.Name, CASEID, Dementia) %>% 
+  mutate(Score = Dementia/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Dementia")
+
+mean_list_all <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Dementia") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_all)
+
+Dementia <- mean_temp %>% 
+  select(Hospital.Name, Score) %>% 
+  group_by(Hospital.Name) %>% 
+  summarize(Dementia_H = mean(Score))
+
+dementia_h <- knowledge %>% 
+  filter(Hospital.Name == name) %>% 
+  select(Hospital.Name, CASEID, Dementia) %>% 
+  mutate(Score = Dementia/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Dementia")
+
+mean_list_h <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Dementia") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_h)
+
+#######################
+# Medication
+#######################
+medication_all <- knowledge %>% 
+  select(Hospital.Name, CASEID, Medication) %>% 
+  mutate(Score = Medication/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Medication")
+
+mean_list_all <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Medication") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_all)
+
+Medication <- mean_temp %>% 
+  select(Hospital.Name, Score) %>% 
+  group_by(Hospital.Name) %>% 
+  summarize(Medication_H = mean(Score))
+
+medication_h <- knowledge %>% 
+  filter(Hospital.Name == name) %>% 
+  select(Hospital.Name, CASEID, Medication) %>% 
+  mutate(Score = Medication/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Medication")
+
+mean_list_h <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Medication") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_h)
+
+#######################
+# Depression
+#######################
+depression_all <- knowledge %>% 
+  select(Hospital.Name, CASEID, Depression) %>% 
+  mutate(Score = Depression/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Depression")
+
+mean_list_all <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Depression") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_all)
+
+Depression <- mean_temp %>% 
+  select(Hospital.Name, Score) %>% 
+  group_by(Hospital.Name) %>% 
+  summarize(Depression_H = mean(Score))
+
+depression_h <- knowledge %>% 
+  filter(Hospital.Name == name) %>% 
+  select(Hospital.Name, CASEID, Depression) %>% 
+  mutate(Score = Depression/2,
+         Grade = case_when(Score < .30 ~ "Poor",
+                           Score >= .30 & Score < .70 ~ "Fair",
+                           Score >= .70 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+  ungroup() %>%
+  {. ->> mean_temp} %>% 
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Depression")
+
+mean_list_h <- mean_temp$Score %>% 
+  mean %>% 
+  cbind("Depression") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list_h)
+```
+
+<center>
+**Cohort Knowledge**
+</center>
+
 ```{r}
-NICHE_colors <- c("#57068C","#6199AE","#FFC842","#314383","#6BAB8A","#F09C5D")
+cols <- c("Poor" = "#AE6180", 
+          "Fair" = "#A3A9AC", 
+          "Very Good" = "#6BAB8A")
 
-falls <- count(knowledge, Falls) %>% 
-  arrange(desc(Falls)) %>% 
-  mutate(freq.prop = n / sum(n),
-         lab.ypos = cumsum(freq.prop) - 0.5*freq.prop,
-         Falls = as.factor(Falls)) %>% 
-  ggplot(aes(x = 2, y = freq.prop, fill = Falls)) +
-  geom_bar(stat = "identity", color = "white") +
-  coord_polar(theta = "y", start = 0)+
-  geom_text(aes(y = lab.ypos, label = round(freq.prop,1)), color = "white") +
-  labs(title = "Falls") +
-  scale_fill_manual(values = NICHE_colors, name = "Score") +
-  theme_void ()+
-  xlim(0.5, 2.5)
+question_levels <- c("Assess", "Delirium", "Dementia", "Depression", "Falls", "Medication", "Nutrition", "Skin", "Sleep", "Urinary")
 
-skin <- count(knowledge, Skin) %>% 
-  arrange(desc(Skin)) %>% 
-  mutate(freq.prop = n / sum(n),
-         lab.ypos = cumsum(freq.prop) - 0.5*freq.prop,
-         Skin = as.factor(Skin)) %>% 
-  ggplot(aes(x = 2, y = freq.prop, fill = Skin)) +
-  geom_bar(stat = "identity", color = "white") +
-  coord_polar(theta = "y", start = 0)+
-  geom_text(aes(y = lab.ypos, label = round(freq.prop,1)), color = "white") +
-  labs(title = "Skin") +
-  scale_fill_manual(values = NICHE_colors, name = "Score") +
-  theme_void ()+
-  xlim(0.5, 2.5)
+mean_list_all$Mean <- as.numeric(as.character(mean_list_all$Mean))
 
-assess <- count(knowledge, Assess) %>% 
-  arrange(desc(Assess)) %>% 
-  mutate(freq.prop = n / sum(n),
-         lab.ypos = cumsum(freq.prop) - 0.5*freq.prop,
-         Assess = as.factor(Assess)) %>% 
-  ggplot(aes(x = 2, y = freq.prop, fill = Assess)) +
-  geom_bar(stat = "identity", color = "white") +
-  coord_polar(theta = "y", start = 0)+
-  geom_text(aes(y = lab.ypos, label = round(freq.prop,1)), color = "white") +
-  labs(title = "Assess") +
-  scale_fill_manual(values = NICHE_colors, name = "Score") +
-  theme_void ()+
-  xlim(0.5, 2.5)
-
-delirium <- count(knowledge, Delirium) %>% 
-  arrange(desc(Delirium)) %>% 
-  mutate(freq.prop = n / sum(n),
-         lab.ypos = cumsum(freq.prop) - 0.5*freq.prop,
-         Delirium = as.factor(Delirium)) %>% 
-  ggplot(aes(x = 2, y = freq.prop, fill = Delirium)) +
-  geom_bar(stat = "identity", color = "white") +
-  coord_polar(theta = "y", start = 0)+
-  geom_text(aes(y = lab.ypos, label = round(freq.prop,1)), color = "white") +
-  labs(title = "Delirium") +
-  scale_fill_manual(values = NICHE_colors, name = "Score") +
-  theme_void ()+
-  xlim(0.5, 2.5)
-
-urinary <- count(knowledge, Urinary) %>% 
-  arrange(desc(Urinary)) %>% 
-  mutate(freq.prop = n / sum(n),
-         lab.ypos = cumsum(freq.prop) - 0.5*freq.prop,
-         Urinary = as.factor(Urinary)) %>% 
-  ggplot(aes(x = 2, y = freq.prop, fill = Urinary)) +
-  geom_bar(stat = "identity", color = "white") +
-  coord_polar(theta = "y", start = 0)+
-  geom_text(aes(y = lab.ypos, label = round(freq.prop,1)), color = "white") +
-  labs(title = "Urinary") +
-  scale_fill_manual(values = NICHE_colors, name = "Score") +
-  theme_void ()+
-  xlim(0.5, 2.5)
-
-nutrition <- count(knowledge, Nutrition) %>% 
-  arrange(desc(Nutrition)) %>% 
-  mutate(freq.prop = n / sum(n),
-         lab.ypos = cumsum(freq.prop) - 0.5*freq.prop,
-         Nutrition = as.factor(Nutrition)) %>% 
-  ggplot(aes(x = 2, y = freq.prop, fill = Nutrition)) +
-  geom_bar(stat = "identity", color = "white") +
-  coord_polar(theta = "y", start = 0)+
-  geom_text(aes(y = lab.ypos, label = round(freq.prop,1)), color = "white") +
-  labs(title = "Nutrition") +
-  scale_fill_manual(values = NICHE_colors, name = "Score") +
-  theme_void ()+
-  xlim(0.5, 2.5)
-
-sleep <- count(knowledge, Sleep) %>% 
-  arrange(desc(Sleep)) %>% 
-  mutate(freq.prop = n / sum(n),
-         lab.ypos = cumsum(freq.prop) - 0.5*freq.prop,
-         Sleep = as.factor(Sleep)) %>% 
-  ggplot(aes(x = 2, y = freq.prop, fill = Sleep)) +
-  geom_bar(stat = "identity", color = "white") +
-  coord_polar(theta = "y", start = 0)+
-  geom_text(aes(y = lab.ypos, label = round(freq.prop,1)), color = "white") +
-  labs(title = "Sleep") +
-  scale_fill_manual(values = NICHE_colors, name = "Score") +
-  theme_void ()+
-  xlim(0.5, 2.5)
-
-dementia <- count(knowledge, Dementia) %>% 
-  arrange(desc(Dementia)) %>% 
-  mutate(freq.prop = n / sum(n),
-         lab.ypos = cumsum(freq.prop) - 0.5*freq.prop,
-         Dementia = as.factor(Dementia)) %>% 
-  ggplot(aes(x = 2, y = freq.prop, fill = Dementia)) +
-  geom_bar(stat = "identity", color = "white") +
-  coord_polar(theta = "y", start = 0)+
-  geom_text(aes(y = lab.ypos, label = round(freq.prop,1)), color = "white") +
-  labs(title = "Dementia") +
-  scale_fill_manual(values = NICHE_colors, name = "Score") +
-  theme_void ()+
-  xlim(0.5, 2.5)
-
-medication <- count(knowledge, Medication) %>% 
-  arrange(desc(Medication)) %>% 
-  mutate(freq.prop = n / sum(n),
-         lab.ypos = cumsum(freq.prop) - 0.5*freq.prop,
-         Medication = as.factor(Medication)) %>% 
-  ggplot(aes(x = 2, y = freq.prop, fill = Medication)) +
-  geom_bar(stat = "identity", color = "white") +
-  coord_polar(theta = "y", start = 0)+
-  geom_text(aes(y = lab.ypos, label = round(freq.prop,1)), color = "white") +
-  labs(title = "Medication") +
-  scale_fill_manual(values = NICHE_colors, name = "Score") +
-  theme_void ()+
-  xlim(0.5, 2.5)
-
-depression <- count(knowledge, Depression) %>% 
-  arrange(desc(Depression)) %>% 
-  mutate(freq.prop = n / sum(n),
-         lab.ypos = cumsum(freq.prop) - 0.5*freq.prop,
-         Depression = as.factor(Depression)) %>% 
-  ggplot(aes(x = 2, y = freq.prop, fill = Depression)) +
-  geom_bar(stat = "identity", color = "white") +
-  coord_polar(theta = "y", start = 0) +
-  geom_text(aes(y = lab.ypos, label = round(freq.prop,1)), color = "white") +
-  labs(title = "Depression") +
-  scale_fill_manual(values = NICHE_colors, name = "Score") +
-  theme_void ()+
-  xlim(0.5, 2.5)
+list(falls_all, skin_all, assess_all, delirium_all, urinary_all, nutrition_all, sleep_all, 
+     dementia_all, medication_all, depression_all, mean_list_all) %>% 
+  reduce(full_join) %>%
+  mutate(Grade = ordered(Grade, 
+                         levels = c("Very Good", "Fair", "Poor")),
+         Question = ordered(Question, levels = rev(question_levels))) %>%
+  ggplot(aes(x = Question, y = Percent/100, fill = Grade)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 11, color = "white") +
+  geom_point(aes(x=Question, y=Mean), shape = 8, size = 1, show.legend = FALSE, stroke = 0.3) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", 
+        axis.text.x = element_text(size = 7),
+        axis.text.y = element_text(size = 7)) +
+  coord_flip()
 ```
 
+<center>
+  **`r name` Knowledge**
+</center>
+  
+```{r}
 
-```{r, fig.asp=0.90, fig.width = 35, out.width='165%'}
-ggpubr::ggarrange(falls, skin, assess, urinary, delirium, nutrition, sleep, dementia, medication, depression, ncol=2, nrow=5, common.legend = TRUE, legend = "bottom", widths = c(3,3), heights = c(3,3))
+mean_list_h$Mean <- as.numeric(as.character(mean_list_h$Mean))
+
+list(falls_h, skin_h, assess_h, delirium_h, urinary_h, nutrition_h, sleep_h, 
+     dementia_h, medication_h, depression_h, mean_list_h) %>% 
+  reduce(full_join) %>%
+  mutate(Grade = ordered(Grade, 
+                         levels = c("Very Good", "Fair", "Poor")),
+         Question = ordered(Question, levels = rev(question_levels))) %>%
+  ggplot(aes(x = Question, y = Percent/100, fill = Grade)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 11, color = "white") +
+  geom_point(aes(x=Question, y=Mean), shape = 8, size = 1, show.legend = FALSE, stroke = 0.3) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", 
+        axis.text.x = element_text(size = 7),
+        axis.text.y = element_text(size = 7)) +
+  coord_flip()
 ```
-
 
 **This diagram depicts nurses' rating of organizational efforts to educate the workforce on the care of older adults.**
 
@@ -1328,6 +1687,7 @@ In general, nurses perceive that organizational factors impede progress to deliv
 
 This diagram summarizes the participating hospitals' performance on the knowledge and practice environment components of the GIAP survey. The majority of hospitals participating in the Spring 2018 survey fall within the **Early Quadrant**. Your hospital is marked with a bold dot. 
 
+
 ```{r}
 ResAv <- giap %>%
   select(Hospital.Name, CASEID, 
@@ -1402,14 +1762,15 @@ profile_DF <- list(ResAv %>% select(Hospital.Name, Resource_Availability_H) %>%u
 AgeSensCare %>% select(Hospital.Name, Age_Sensitive_Care_H) %>% unique(),
 ImpClim %>% select(Hospital.Name, Implementation_Climate_H) %>% unique(),
 EduOpp %>% select(Hospital.Name, Edu_Opp_H) %>% unique(),
-Falls %>% select(Hospital.Name, Falls_H) %>% unique(),
-Restraints %>% select(Hospital.Name, Restraints_H) %>% unique(),
-Skin %>% select(Hospital.Name, Skin_H) %>% unique(),
-Incontinence %>% select(Hospital.Name, Incontinence_H) %>% unique(),
-Pain %>% select(Hospital.Name, Pain_H) %>% unique(),
+Assess %>% select(Hospital.Name, Assess_H) %>% unique(),
 Delirium %>% select(Hospital.Name, Delirium_H) %>% unique(),
 Dementia %>% select(Hospital.Name, Dementia_H) %>% unique(),
-Nutrition %>% select(Hospital.Name, Nutrition_H) %>% unique()) %>%
+Depression %>% select(Hospital.Name, Depression_H) %>% unique(),
+Medication %>% select(Hospital.Name, Medication_H) %>% unique(),
+Nutrition %>% select(Hospital.Name, Nutrition_H) %>% unique(),
+Skin %>% select(Hospital.Name, Skin_H) %>% unique(),
+Sleep %>% select(Hospital.Name, Sleep_H) %>% unique(),
+Urinary %>% select(Hospital.Name, Urinary_H) %>% unique()) %>%
   reduce(full_join, by = "Hospital.Name") %>%
   gather(Variable, `Hospital Average`, -Hospital.Name) %>%
   mutate(Variable = gsub("_H", "", Variable),
@@ -1419,8 +1780,8 @@ Nutrition %>% select(Hospital.Name, Nutrition_H) %>% unique()) %>%
   ungroup() %>%
   mutate(Variable = forcats::fct_reorder(Variable, `Overall Average`)) %>%
   gather(Level, Value, c(`Hospital Average`, `Overall Average`)) %>%
-  mutate(Axis = ifelse(Variable %in% c("Incontinence", "Dementia", "Restraints", "Nutrition", 
-                                       "Delirium", "Pain", "Skin", "Falls"), "Knowledge", 
+  mutate(Axis = ifelse(Variable %in% c("Assess", "Delirium", "Dementia", "Depression", "Falls", "Medication",
+                                       "Nutrition", "Skin", "Sleep", "Urinary"), "Knowledge", 
                        "Practice Environment"))
 ```
 
@@ -1431,7 +1792,7 @@ profile_DF %>%
   group_by(Hospital.Name, Axis) %>%
   summarize(Mean = mean(Value)) %>%
   spread(., key = Axis, value = Mean) %>%
-  ggplot(aes(x = `Practice Environment` / 4, y = Knowledge / 4)) +
+  ggplot(aes(x = `Practice Environment` / 4, y = Knowledge)) +
   geom_tile(aes(x = 0.64, y = 0.4, width = 0.24, height = 0.4), fill = "#6199AE") +
   geom_tile(aes(x = 0.64, y = 0.8, width = 0.24, height = 0.4), fill = "#E6E6E6") +
   geom_tile(aes(x = 0.88, y = 0.4, width = 0.24, height = 0.4), fill = "#E6E6E6") +
