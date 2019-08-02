@@ -1819,7 +1819,7 @@ The GIAP scales each contain between five and eleven questions and the coefficie
 
 Registered nurses and nursing assistants/patient care associates between the ages of 18 -70 years, working on the nursing units implementing the NICHE nursing practice model, were invited to participate in the GIAP. Staff working on a full-time or part-time basis are eligible to participate in the survey. Because the GIAP focuses on nurses' knowledge and perceptions, the sample is limited to nursing personnel.
 
-33 NICHE member hospitals participated in the Feb 2018 GIAP survey. Within the 33 hospitals, 3075 nurses were eligible to participate. We received complete data from 1012 respondents, which equates to a 32.91% response rate.
+18 NICHE member hospitals participated in the `r cohort` GIAP survey. Within the 18 hospitals, 3738 nurses were eligible to participate. We received complete data from 1083 respondents, which equates to a 27.97% response rate.
 
 **Data analysis**
 
