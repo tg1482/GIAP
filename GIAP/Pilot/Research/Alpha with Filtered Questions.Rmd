@@ -1,0 +1,429 @@
+---
+title: "Geriatric Institutional Assessment Profile (GIAP) Summary Report"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 6, fig.asp = 0.9, out.width = "90%", fig.align = "center", dev='svg')
+```
+
+```{r}
+library(openxlsx)
+library(tidyverse)
+library(ggthemes)
+library(scales)
+library(data.table)
+library(haven)
+library(pander)
+library(lme4)
+library(emmeans)
+library(pander)
+library(zoo)
+
+panderOptions('table.split.table', Inf)
+
+NICHE_colors <- c("#57068C","#6199AE","#FFC842","#314383","#6BAB8A","#F09C5D")
+```
+
+```{r}
+giap <- read.xlsx("Complete Raw Data CMC.xlsx", detectDates = TRUE)
+
+wrap_20 <- wrap_format(20)
+wrap_30 <- wrap_format(30)
+wrap_40 <- wrap_format(40)
+```
+
+```{r}
+giap$LastInitial <- ifelse(is.na(giap$RecipientLastName), " ", toupper(substr(giap$RecipientLastName, 1, 1)))
+giap$FirstInitial <- ifelse(is.na(giap$RecipientFirstName), " ", toupper(substr(giap$RecipientFirstName, 1, 1)))
+
+giap <- mutate(giap, PID = Participant.ID,
+                     UID = round(Unit.ID, 4),
+                     HID = round(Hospital.ID, 4))
+hosp <- read.xlsx("Master List of Variables.xlsx", sheet = "Invited Hospitals")
+srost <- read.xlsx("Master List of Variables.xlsx", sheet = "Sampled Rosters")
+arost <- read.xlsx("Master List of Variables.xlsx", sheet = "Participating - full rosters")
+zips <- read.csv("free-zipcode-database-Primary.csv")
+zips$ZIP5 <- str_pad(zips$Zipcode, 5, pad = "0")
+hosp <- left_join(hosp, zips, by = c("Zip.code" = "ZIP5"))
+hosp <- mutate(hosp, 
+               Region = car::recode(State, "'MI'='MIDWEST';'OH'='MIDWEST';'IN'='MIDWEST';'MD'='SOUTH';'CA'='WEST';'PA'='NORTHEAST';'OR'='WEST';'MA'='NORTHEAST';'NY'='NORTHEAST';
+                                    'CO'='WEST';'NJ'='NORTHEAST';'AZ'='WEST';'LA'='SOUTH';'RI'='NORTHEAST';'TN'='SOUTH';'FL'='SOUTH';'CT'='NORTHEAST';'TX'='SOUTH';'WI'='MIDWEST';'IL'='MIDWEST';'DC'='SOUTH'"),
+               `Ownership(for.profit/not.for.profit/Government/Public)` = gsub("\n", "", `Ownership(for.profit/not.for.profit/Government/Public)`))
+srost <- mutate(srost, Shift_Cat = car::recode(SHIFT_R, "0='Missing';1='Day (7am-3pm)';2='Evening (3pm-11pm)';3='Night (11pm-7am)';4='12HR Day(7am-7pm)';5='12HR Night (7pm-7am)';6='Part-time, variable'"),
+                PID = round(Participant.ID, 4),
+                UID = round(Unit.ID, 4),
+                HID = round(Hospital.ID, 4),
+                Survey = PID %in% na.omit(giap$PID),
+                LastInitial = substr(Participant.Name, 1, 1),
+                TENURE_IN_DAYS = ifelse(TENURE_IN_DAYS == 0, NA, TENURE_IN_DAYS))
+
+```
+
+```{r}
+question_list <- read.xlsx("question_list.xlsx")
+question_list <- na.locf(question_list)
+question_list$Select <- c(1,2)
+question_list <- question_list %>% filter(Select==2) %>% select(Code, Question)
+```
+
+
+# Coefficient Alpha for Scales
+
+In this report, I have displayed the questions that we surveryed during the Fall 2017 GIAP and their corresponding Cronbach's Alpha value if we were to drop that question from the question set. I have also added a standardized Cronbach's Alpha value at the beginning of all tables to give an idea of what the consistency within the question set is right now. 
+
+## Resource Availability
+
+How much do you agree or disagree that each of the following is a barrier to your ability to provide nursing care to older adult at your institution? 
+
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q8_1, Q8_2, Q8_3, Q8_4, Q8_5, Q8_6, Q8_9, Q8_10, Q8_11, Q8_7, Q8_12) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+set_value <- myalpha$total$std.alpha %>% round(digits = 3)
+
+myalpha <- myalpha$alpha.drop %>% select(std.alpha)
+myalpha$q <- row.names(myalpha) %>% gsub(pattern = "-", replacement = "")
+
+left_join(myalpha, question_list, by = c("q" = "Code")) %>% 
+  setNames(c("Alpha", "Question Number", "Question"))%>% 
+  select("Question Number", "Question", "Alpha") %>%
+#  filter(Alpha>=.55) %>% 
+  knitr::kable(caption = paste("Question Set Alpha is", set_value))
+```
+
+## Age-Sensitive Care
+
+How much do you agree or disagree with each of the following statements:
+
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q7_1, Q7_2, Q7_4, Q7_5, Q7_7, Q7_8, Q7_9, Q7_10, Q7_11, Q7_12, Q7_13) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+set_value <- myalpha$total$std.alpha %>% round(digits = 3)
+
+myalpha <- myalpha$alpha.drop %>% select(std.alpha)
+myalpha$q <- row.names(myalpha) %>% gsub(pattern = "-", replacement = "")
+
+left_join(myalpha, question_list, by = c("q" = "Code")) %>% 
+  setNames(c("Alpha", "Question Number", "Question"))%>% 
+  select("Question Number", "Question", "Alpha") %>%
+#  filter(Alpha>=.55) %>% 
+  knitr::kable(caption = paste("Question Set Alpha is", set_value))
+```
+
+## Implementation Climate
+
+How much do you agree or disagree with each of the following statements:
+
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q7_26, Q7_27, Q7_28, Q7_29, Q7_30) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+set_value <- myalpha$total$std.alpha %>% round(digits = 3)
+
+myalpha <- myalpha$alpha.drop %>% select(std.alpha)
+myalpha$q <- row.names(myalpha) %>% gsub(pattern = "-", replacement = "")
+
+left_join(myalpha, question_list, by = c("q" = "Code")) %>% 
+  setNames(c("Alpha", "Question Number", "Question"))%>% 
+  select("Question Number", "Question", "Alpha") %>%
+#  filter(Alpha>=.55) %>% 
+  knitr::kable(caption = paste("Question Set Alpha is", set_value))
+```
+
+## Organization Values
+
+How much do you agree or disagree with each of the following statements:
+
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q7_19, Q7_20, Q7_21, Q7_22, Q7_25) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+set_value <- myalpha$total$std.alpha %>% round(digits = 3)
+
+myalpha <- myalpha$alpha.drop %>% select(std.alpha)
+myalpha$q <- row.names(myalpha) %>% gsub(pattern = "-", replacement = "")
+
+left_join(myalpha, question_list, by = c("q" = "Code")) %>% 
+  setNames(c("Alpha", "Question Number", "Question"))%>% 
+  select("Question Number", "Question", "Alpha") %>%
+#  filter(Alpha>=.55) %>% 
+  knitr::kable(caption = paste("Question Set Alpha is", set_value))
+```
+
+## Falls Knowledge
+
+Effective care is based on scientific knowledge and is offered to all who can benefit from that care. Similarly, effective care avoids the overuse or underuse of treatments or services that do not achieve the desired results in health outcomes. For the older adult patients that you care for, how much do you agree or disagree that the following treatments or practices are used effectively? 
+
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_7, Q5_8, Q5_14, Q5_21, Q5_24, Q5_25, Q5_26, Q5_33, Q20_31, Q20_32) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+set_value <- myalpha$total$std.alpha %>% round(digits = 3)
+
+myalpha <- myalpha$alpha.drop %>% select(std.alpha)
+myalpha$q <- row.names(myalpha) %>% gsub(pattern = "-", replacement = "")
+
+left_join(myalpha, question_list, by = c("q" = "Code")) %>% 
+  setNames(c("Alpha", "Question Number", "Question"))%>% 
+  select("Question Number", "Question", "Alpha") %>%
+#  filter(Alpha>=.55) %>% 
+  knitr::kable(caption = paste("Question Set Alpha is", set_value))
+```
+
+## Restraints Knowledge
+
+How much do you agree or disagree that the following treatments or practices are used effectively?
+
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q20_40, Q20_42, Q20_48) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+set_value <- myalpha$total$std.alpha %>% round(digits = 3)
+
+myalpha <- myalpha$alpha.drop %>% select(std.alpha)
+myalpha$q <- row.names(myalpha) %>% gsub(pattern = "-", replacement = "")
+
+left_join(myalpha, question_list, by = c("q" = "Code")) %>% 
+  setNames(c("Alpha", "Question Number", "Question"))%>% 
+  select("Question Number", "Question", "Alpha") %>%
+#  filter(Alpha>=.55) %>% 
+  knitr::kable(caption = paste("Question Set Alpha is", set_value))
+```
+
+* Note: Q5_1 removed to improve reliability
+
+## Skin Knowledge
+
+How much do you agree or disagree that the following treatments or practices are used effectively?
+
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q20_43, Q20_44, Q20_47) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+set_value <- myalpha$total$std.alpha %>% round(digits = 3)
+
+myalpha <- myalpha$alpha.drop %>% select(std.alpha)
+myalpha$q <- row.names(myalpha) %>% gsub(pattern = "-", replacement = "")
+
+left_join(myalpha, question_list, by = c("q" = "Code")) %>% 
+  setNames(c("Alpha", "Question Number", "Question"))%>% 
+  select("Question Number", "Question", "Alpha") %>%
+#  filter(Alpha>=.55) %>% 
+  knitr::kable(caption = paste("Question Set Alpha is", set_value))
+```
+
+* Note: Q5_6, Q20_37, Q20_38, and Q20_46 removed to improve reliability
+
+## Incontinence Knowledge
+
+How much do you agree or disagree that the following treatments or practices are used effectively?
+
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_3, Q5_4) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+set_value <- myalpha$total$std.alpha %>% round(digits = 3)
+
+myalpha <- myalpha$alpha.drop %>% select(std.alpha)
+myalpha$q <- row.names(myalpha) %>% gsub(pattern = "-", replacement = "")
+
+left_join(myalpha, question_list, by = c("q" = "Code")) %>% 
+  setNames(c("Alpha", "Question Number", "Question"))%>% 
+  select("Question Number", "Question", "Alpha") %>%
+#  filter(Alpha>=.55) %>% 
+  knitr::kable(caption = paste("Question Set Alpha is", set_value))
+```
+
+* Note: Q20_7, Q20_8, Q20_9, Q20_12, Q20_13, Q20_14, Q5_5 removed to improve reliability
+
+## Pain Knowledge
+
+How much do you agree or disagree that the following treatments or practices are used effectively?
+
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_9, Q5_23, Q20_17, Q20_18) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+set_value <- myalpha$total$std.alpha %>% round(digits = 3)
+
+myalpha <- myalpha$alpha.drop %>% select(std.alpha)
+myalpha$q <- row.names(myalpha) %>% gsub(pattern = "-", replacement = "")
+
+left_join(myalpha, question_list, by = c("q" = "Code")) %>% 
+  setNames(c("Alpha", "Question Number", "Question"))%>% 
+  select("Question Number", "Question", "Alpha") %>%
+#  filter(Alpha>=.55) %>% 
+  knitr::kable(caption = paste("Question Set Alpha is", set_value))
+```
+
+* Note: Q20_15 removed to improve reliability
+
+## Delirium Knowledge
+
+Nursing Care for Older Adults.
+
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q20_20, Q20_58) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+set_value <- myalpha$total$std.alpha %>% round(digits = 3)
+
+myalpha <- myalpha$alpha.drop %>% select(std.alpha)
+myalpha$q <- row.names(myalpha) %>% gsub(pattern = "-", replacement = "")
+
+left_join(myalpha, question_list, by = c("q" = "Code")) %>% 
+  setNames(c("Alpha", "Question Number", "Question"))%>% 
+  select("Question Number", "Question", "Alpha") %>%
+#  filter(Alpha>=.55) %>% 
+  knitr::kable(caption = paste("Question Set Alpha is", set_value))
+```
+
+* Note: Q20_19, Q20_51, and Q20_55 removed to improve reliability
+
+## Dementia Knowledge
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q20_26, Q20_29) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+set_value <- myalpha$total$std.alpha %>% round(digits = 3)
+
+myalpha <- myalpha$alpha.drop %>% select(std.alpha)
+myalpha$q <- row.names(myalpha) %>% gsub(pattern = "-", replacement = "")
+
+left_join(myalpha, question_list, by = c("q" = "Code")) %>% 
+  setNames(c("Alpha", "Question Number", "Question"))%>% 
+  select("Question Number", "Question", "Alpha") %>%
+#  filter(Alpha>=.55) %>% 
+  knitr::kable(caption = paste("Question Set Alpha is", set_value))
+```
+
+* Note: Q5_20 and Q20_22 removed to improve reliability
+
+## Nutrition/Hydration Knowlede
+```{r}
+myalpha <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_11, Q5_19) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) %>%
+  psych::alpha(check.keys=TRUE)
+
+set_value <- myalpha$total$std.alpha %>% round(digits = 3)
+
+myalpha <- myalpha$alpha.drop %>% select(std.alpha)
+myalpha$q <- row.names(myalpha) %>% gsub(pattern = "-", replacement = "")
+
+left_join(myalpha, question_list, by = c("q" = "Code")) %>% 
+  setNames(c("Alpha", "Question Number", "Question"))%>% 
+  select("Question Number", "Question", "Alpha") %>%
+#  filter(Alpha>=.55) %>% 
+  knitr::kable(caption = paste("Question Set Alpha is", set_value))
+```
+
+* Note: Q5_13, Q20_33, and Q20_51 removed to improve reliability

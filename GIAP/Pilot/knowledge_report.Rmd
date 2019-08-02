@@ -1,0 +1,470 @@
+---
+title: "Knowledge Report"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 4, fig.height = 4, fig.align = "center", dev='svg')
+```
+
+```{r}
+library(openxlsx)
+library(tidyverse)
+library(ggthemes)
+library(scales)
+library(data.table)
+library(haven)
+library(pander)
+library(lme4)
+library(emmeans)
+library(pander)
+library(zoo)
+library(pipeR)
+
+panderOptions('table.split.table', Inf)
+
+NICHE_colors <- c("#57068C","#6199AE","#FFC842","#314383","#6BAB8A","#F09C5D")
+```
+
+```{r}
+giap <- read.xlsx("Complete Raw Data CMC.xlsx", detectDates = TRUE)
+
+wrap_20 <- wrap_format(20)
+wrap_30 <- wrap_format(30)
+wrap_40 <- wrap_format(40)
+```
+
+```{r}
+giap$LastInitial <- ifelse(is.na(giap$RecipientLastName), " ", toupper(substr(giap$RecipientLastName, 1, 1)))
+giap$FirstInitial <- ifelse(is.na(giap$RecipientFirstName), " ", toupper(substr(giap$RecipientFirstName, 1, 1)))
+
+giap <- mutate(giap, PID = Participant.ID,
+                     UID = round(Unit.ID, 4),
+                     HID = round(Hospital.ID, 4))
+hosp <- read.xlsx("Master List of Variables.xlsx", sheet = "Invited Hospitals")
+srost <- read.xlsx("Master List of Variables.xlsx", sheet = "Sampled Rosters")
+arost <- read.xlsx("Master List of Variables.xlsx", sheet = "Participating - full rosters")
+zips <- read.csv("free-zipcode-database-Primary.csv")
+zips$ZIP5 <- str_pad(zips$Zipcode, 5, pad = "0")
+hosp <- left_join(hosp, zips, by = c("Zip.code" = "ZIP5"))
+hosp <- mutate(hosp, 
+               Region = car::recode(State, "'MI'='MIDWEST';'OH'='MIDWEST';'IN'='MIDWEST';'MD'='SOUTH';'CA'='WEST';'PA'='NORTHEAST';'OR'='WEST';'MA'='NORTHEAST';'NY'='NORTHEAST';
+                                    'CO'='WEST';'NJ'='NORTHEAST';'AZ'='WEST';'LA'='SOUTH';'RI'='NORTHEAST';'TN'='SOUTH';'FL'='SOUTH';'CT'='NORTHEAST';'TX'='SOUTH';'WI'='MIDWEST';'IL'='MIDWEST';'DC'='SOUTH'"),
+               `Ownership(for.profit/not.for.profit/Government/Public)` = gsub("\n", "", `Ownership(for.profit/not.for.profit/Government/Public)`))
+srost <- mutate(srost, Shift_Cat = car::recode(SHIFT_R, "0='Missing';1='Day (7am-3pm)';2='Evening (3pm-11pm)';3='Night (11pm-7am)';4='12HR Day(7am-7pm)';5='12HR Night (7pm-7am)';6='Part-time, variable'"),
+                PID = round(Participant.ID, 4),
+                UID = round(Unit.ID, 4),
+                HID = round(Hospital.ID, 4),
+                Survey = PID %in% na.omit(giap$PID),
+                LastInitial = substr(Participant.Name, 1, 1),
+                TENURE_IN_DAYS = ifelse(TENURE_IN_DAYS == 0, NA, TENURE_IN_DAYS))
+
+```
+
+```{r}
+question_list <- read.xlsx("question_list.xlsx")
+question_list <- na.locf(question_list)
+question_list$Select <- c(1,2)
+question_list <- question_list %>% filter(Select==2) %>% select(Code, Question)
+```
+
+```{r}
+knowledge <- read.csv("knowledge_answers.csv")
+knowledge$select <- c(1,2)
+knowledge <- knowledge %>% filter(select == 1) %>% select(-select)
+
+knowledge$Code<- gsub(pattern = "-", replacement = "_", 
+                      gsub(pattern = " ", replacement = "", 
+                           gsub(pattern = " –", replacement = "", 
+                                substr(knowledge$Question, 11,16))))
+
+knowledge$Answers <- strsplit(as.character(knowledge$Answer), "/")
+
+knowledge <- knowledge %>% select(Code, Type, Answers)
+
+
+trim <- function (x) gsub("^\\s+|\\s+$", "", x)
+
+response_to_num <- function(x){
+  response <- c()
+  for(i in 1:length(x)){
+    x[i] <- trim(x[i])
+    response[i] <- case_when(x[i] == "Strongly Disagree" ~ 0,
+                             x[i] == "Disagree" ~ 1,
+                             x[i] == "Neither Agree nor Disagree" ~ 2,
+                             x[i] == "Agree" ~ 3,
+                             x[i] == "Strongly Agree" ~ 4)
+  }
+
+  return(response)
+}
+
+for(i in 1:nrow(knowledge)){
+  knowledge[[3]][[i]] <- response_to_num(knowledge[[3]][[i]]) %>% list()
+}
+
+check_score <- function(row){
+  temp <- row %>% 
+    t() %>% 
+    data.frame() %>% 
+    mutate(Code = row.names(.)) %>% 
+    left_join(knowledge, by = ("Code")) %>% 
+    setNames(c("Response", "Code", "Type", "Answers")) %>% 
+    rowwise() %>% 
+    mutate(Points = ifelse(Response %in% (Answers %>% unlist), 1, 0))
+  return(sum(temp$Points)/length(temp$Points))
+}
+
+```
+
+In the report below, I have presented a histogram of the scores achieved by the nurses in the cohort with respect to the knowledge question. A 25% score indicates that they got 25% questions correct of all the questions, which range from 4 - 10 depending on the question set. 
+
+I have also used all the questions from the original question set since the consistency does not matter in this case, since the answers are objective. 
+
+```{r}
+set <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_7, Q5_8, Q5_14, Q5_21, Q5_24, Q5_25, Q5_26, Q5_33, Q20_31, Q20_32) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID)
+
+score <- c()
+
+for(i in 1:nrow(set)){
+  score[i] <- check_score(set[i,])
+}
+
+score <- score %>% data.frame() %>% setNames("Score")
+score <- score %>%
+  mutate(Grade = case_when(Score < .50 ~ "Poor",
+                           Score >= .50 & Score < .70 ~ "Fair",
+                           Score >= .70 & Score < .90 ~ "Good",
+                           Score >= .90 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good","Very Good")))
+
+
+fall <- score %>%
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Falls")
+
+mean_list <- score$Score %>% 
+  mean %>% 
+  cbind("Falls") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question"))
+```
+
+```{r}
+set <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q20_40, Q20_42, Q20_48, Q5_1) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID)
+
+score <- c()
+
+for(i in 1:nrow(set)){
+  score[i] <- check_score(set[i,])
+}
+
+score <- score %>% data.frame() %>% setNames("Score")
+score <- score %>%
+  mutate(Grade = case_when(Score < .50 ~ "Poor",
+                           Score >= .50 & Score < .70 ~ "Fair",
+                           Score >= .70 & Score < .90 ~ "Good",
+                           Score >= .90 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good","Very Good")))
+
+
+restraints <- score %>%
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Restraints") 
+
+mean_list <- score$Score %>% 
+  mean %>% 
+  cbind("Restraints") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list)
+```
+
+```{r}
+set <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q20_43, Q20_44, Q20_47, Q5_6, Q20_37, Q20_38, Q20_46) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) 
+
+score <- c()
+
+for(i in 1:nrow(set)){
+  score[i] <- check_score(set[i,])
+}
+
+score <- score %>% data.frame() %>% setNames("Score")
+score <- score %>%
+  mutate(Grade = case_when(Score < .50 ~ "Poor",
+                           Score >= .50 & Score < .70 ~ "Fair",
+                           Score >= .70 & Score < .90 ~ "Good",
+                           Score >= .90 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good","Very Good")))
+
+
+skin <- score %>%
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Skin")
+
+mean_list <- score$Score %>% 
+  mean %>% 
+  cbind("Skin") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list)
+```
+
+```{r}
+set <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_3, Q5_4, Q20_7, Q20_8, Q20_9, Q20_12, Q20_13, Q20_14, Q5_5) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) 
+
+score <- c()
+
+for(i in 1:nrow(set)){
+  score[i] <- check_score(set[i,])
+}
+score <- score %>% data.frame() %>% setNames("Score")
+score <- score %>%
+  mutate(Grade = case_when(Score < .50 ~ "Poor",
+                           Score >= .50 & Score < .70 ~ "Fair",
+                           Score >= .70 & Score < .90 ~ "Good",
+                           Score >= .90 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good","Very Good")))
+
+
+incontinence <- score %>%
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Incontinence") 
+
+mean_list <- score$Score %>% 
+  mean %>% 
+  cbind("Incontinence") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list)
+```
+
+```{r}
+set <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_9, Q5_23, Q20_17, Q20_18, Q20_15) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) 
+
+score <- c()
+
+for(i in 1:nrow(set)){
+  score[i] <- check_score(set[i,])
+}
+
+score <- score %>% data.frame() %>% setNames("Score")
+score <- score %>%
+  mutate(Grade = case_when(Score < .50 ~ "Poor",
+                           Score >= .50 & Score < .70 ~ "Fair",
+                           Score >= .70 & Score < .90 ~ "Good",
+                           Score >= .90 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good","Very Good")))
+
+
+pain <- score %>%
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Pain") 
+
+mean_list <- score$Score %>% 
+  mean %>% 
+  cbind("Pain") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list)
+```
+
+```{r}
+set <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q20_20, Q20_58, Q20_19, Q20_51, Q20_55) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) 
+
+score <- c()
+
+for(i in 1:nrow(set)){
+  score[i] <- check_score(set[i,])
+}
+
+score <- score %>% data.frame() %>% setNames("Score")
+score <- score %>%
+  mutate(Grade = case_when(Score < .50 ~ "Poor",
+                           Score >= .50 & Score < .70 ~ "Fair",
+                           Score >= .70 & Score < .90 ~ "Good",
+                           Score >= .90 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good","Very Good")))
+
+
+delirium <- score %>%
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Delirium") 
+
+mean_list <- score$Score %>% 
+  mean %>% 
+  cbind("Delirium") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list)
+```
+
+```{r}
+set <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q20_26, Q20_29, Q5_20, Q20_22) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID) 
+
+score <- c()
+
+for(i in 1:nrow(set)){
+  score[i] <- check_score(set[i,])
+}
+
+score <- score %>% data.frame() %>% setNames("Score")
+score <- score %>%
+  mutate(Grade = case_when(Score < .50 ~ "Poor",
+                           Score >= .50 & Score < .70 ~ "Fair",
+                           Score >= .70 & Score < .90 ~ "Good",
+                           Score >= .90 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good","Very Good")))
+
+
+dementia <- score %>%
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Dementia") 
+
+mean_list <- score$Score %>% 
+  mean %>% 
+  cbind("Dementia") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list)
+```
+
+```{r}
+set <- giap %>%
+  filter(!is.na(Hospital.ID)) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, 
+         Q5_11, Q5_19, Q5_13, Q20_33, Q20_51) %>%
+  gather(Item, Response, -Hospital.ID, -Unit.ID, -Participant.ID) %>% 
+  filter(!is.na(Response)) %>%
+  mutate(Response_N = as.numeric(substr(Response, 1, 1)) - 1) %>%
+  select(Hospital.ID, Unit.ID, Participant.ID, Item, Response_N) %>%
+  spread(Item, Response_N) %>%
+  select(-Hospital.ID, -Unit.ID, -Participant.ID)
+
+score <- c()
+
+for(i in 1:nrow(set)){
+  score[i] <- check_score(set[i,])
+}
+
+score <- score %>% data.frame() %>% setNames("Score")
+score <- score %>%
+  mutate(Grade = case_when(Score < .50 ~ "Poor",
+                           Score >= .50 & Score < .70 ~ "Fair",
+                           Score >= .70 & Score < .90 ~ "Good",
+                           Score >= .90 ~ "Very Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good","Very Good")))
+
+
+nutrition <- score %>%
+  count(Grade) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Question = "Nutrition") 
+
+mean_list <- score$Score %>% 
+  mean %>% 
+  cbind("Nutrition") %>% 
+  data.frame() %>% 
+  setNames(c("Mean", "Question")) %>%  
+  rbind(mean_list)
+```
+
+```{r fig.height = 7, fig.width = 10}
+cols <- c("Poor" = "#AE6180", 
+          "Fair" = "#A3A9AC", 
+          "Good" = "#FFC842", 
+          "Very Good" = "#6BAB8A")
+
+question_levels <- c("Delirium", "Dementia", "Falls", "Incontinence", "Nutrition", "Pain", "Restraints", "Skin")
+
+mean_list$Mean <- as.numeric(as.character(mean_list$Mean))
+
+list(fall, restraints, skin, incontinence, pain, 
+     delirium, dementia, nutrition, mean_list) %>% 
+  reduce(full_join) %>%
+  mutate(Grade = ordered(Grade, 
+                         levels = c("Very Good", "Good", "Fair", "Poor")),
+         Question = ordered(Question, levels = rev(question_levels))) %>%
+  ggplot(aes(x = Question, y = Percent/100, fill = Grade)) +
+  geom_bar(position = "fill", stat = "identity", width = 0.06 * 11, color = "white") +
+  geom_point(aes(x=Question, y=Mean), shape = 8, size = 2, show.legend = FALSE, stroke = 0.5) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  theme_minimal() +
+  theme(legend.position = "right", 
+        axis.text.x = element_text(size = 10),
+        axis.text.y = element_text(size = 10)) +
+  coord_flip()
+```
+
