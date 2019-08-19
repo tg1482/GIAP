@@ -45,7 +45,7 @@ The GIAP (v.8) provides clinical leaders with information about nurses' percepti
   
 **How to Use the GIAP Results to Improve Nursing Care for Older Adults**
 
-The results are reported in two sections. The first section summarizes nurses' knowledge about the geriatric syndromes of delirium, falls, pressure injuries, and incontinence and the nursing problems of sleep, nutrition and hydration, medication management, and managing behaviors associated with dementia and cognitive decline. The second section summarizes nurses' views about the unit environment to support age-friendly care.
+The results are reported in two sections. The first section summarizes nurses' knowledge and skills to assess and manage the geriatric syndromes of delirium, falls, pressure injuries, and incontinence and the nursing problems of sleep, nutrition and hydration, medication management, and managing behaviors associated with dementia, depression, and cognitive decline. The second section summarizes nurses' views about the unit environment to support age-friendly care.
 
 We use the quality improvement convention of the red, yellow and green stop light colors to present the GIAP results. Where applicable, the mean score for the cohort and your hospital are marked with an asterisks (*). As you review the diagrams, yellow and green denote higher performance on each measure.   
 
@@ -1773,7 +1773,7 @@ The information gained from the GIAP enables nurse managers and clinical leaders
     * Review the NICHE Protocols and other national clinical practice guidelines to integrate evidence-based practices in the nursing care policies, procedures, documentation and reporting processes 
       + Establish nurse-led protocols for falls/mobility, pressure injury prevention, urinary catheter management, medication reconciliation, and discharge planning, patient and caregiver teaching 
       
-    * Develop the Geriatric Resource Nurse (GRN) role on participating units to oversee and lead interprofessional care planning and team development efforts 
+    * Develop the Geriatric Resource Nurse (GRN) role on participating units to oversee and lead inter-professional care planning and team development efforts 
       + Identify and select staff nurses ready to take the next step in their leadership careers.  We recommend that a minimum of three nurses per shift to serve as GRNs
       
     * Establish a NICHE Steering Committee and collaborate with the nursing practice councils to review policies, procedures and documentation systems to standardize data collection and care planning approaches based on the NICHE Protocols and other national clinical practice guidelines for older adults. 
@@ -1794,7 +1794,7 @@ The GIAP is assesses the following components of the nursing practice environmen
 
 **Geriatric Nursing Knowledge**
 
-Nurses' abilities to recognize the multifactorial clinical problems commonly experienced by older adults and appropriately intervene is integral to improving clinical outcomes for older adults. The GIAP assess nurses' knowledge about evidence-based interventions to manage the geriatric syndromes of skin injuries, incontinence, falls, delirium, and the nursing problems of managing dementia behaviors, sleep, nutrition and hydration, and medication management. A sample question from this section is: "Medications are the only way to treat behavioral symptoms in persons living with dementia."
+Nurses' abilities to recognize the multifactorial clinical problems commonly experienced by older adults and appropriately intervene is integral to improving clinical outcomes for older adults. The GIAP assess nurses' knowledge about evidence-based assessments and interventions to manage the geriatric syndromes of skin injuries, incontinence, falls, delirium, and the nursing problems of managing dementia and depression behaviors, sleep, nutrition and hydration, and medication management. A sample question from this section is: "Medications are the only way to treat behavioral symptoms in persons living with dementia."
 
 **Specialized Resources**
 
