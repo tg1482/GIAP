@@ -16,6 +16,9 @@ giap <- read_sav("Feb 2019/Feb 2019 Data.sav")
 
 ######################
 # Changing Variable Names and Structure
+
+giap$facilityName[giap$facilityName == "Baptist Medical Center Jacksonville"] <- "Baptist Medical Center South"
+
 giap <- giap %>% 
   rename("Hospital.Name" = "facilityName") %>% 
   rename("Hospital.ID" = "facilityID") %>% 
@@ -58,6 +61,6 @@ cohort <- "February 2019"
 for(name in hospital.names){
   render("Feb 2019/GIAP Individual Report.Rmd", 
          output_file = paste0("Feb 2019/results/", name, ".html"))
-
 }
 ######################
+

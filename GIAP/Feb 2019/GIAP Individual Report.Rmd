@@ -9,8 +9,7 @@ nocite: |
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 6, fig.asp = 0.618,
-                      out.width = "80%", fig.align = "center", fig.show='hold')
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 6, fig.asp = 0.618, out.width = "80%", fig.align = "center", fig.show='hold')
 ```
 
 ```{r initialize}
