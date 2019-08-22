@@ -23,7 +23,7 @@ knitr::include_graphics("NICHE_logo.jpg")
 # **Nurses Improving Care for Healthsystem Elders**
 ## **Geriatric Institutional Assessment Profile Report**
 ### **`r cohort` Cohort**
-### **Duke Regional Hospital**
+### **`r hospital_name`**
 </center>
 
 #### **`r name` Unit**
@@ -1668,9 +1668,9 @@ profile_DF %>%
 
 Hospitals in the ***early quadrant*** are characterized by gaps in nurses' knowledge regarding evidence-based practices to assess and manage common nursing problems experienced by older adults during acute care hospital stays. Because nursing practice and population-based care approaches are embedded within unit-level care processes, hospitals in the early practice environment stage are characterized by limited resources and specialized services designed to meet the needs of older adults.
 
-#####**Recommendations to Develop Your NICHE Program**
-#####**Duke Regional Hospital - `r name` Unit**
-#####**Early**
+##### **Recommendations to Develop Your NICHE Program**
+##### **`r hospital_name` - `r name` Unit**
+##### **Early**
 
 The information gained from the GIAP enables nurse managers and clinical leaders to prioritize continuing professional development and clinical quality improvement initiatives to implement the NICHE practice model. Based on your hospital's results we recommend: 
 
