@@ -4,7 +4,7 @@ p_load(tidyverse, ggplot2, pander, knitr, scales, readxl, kableExtra, rmarkdown,
 
 ######################
 # Loading Survey Data and Correct Knowledge Questions
-giap <- read_excel("summer2018AllData.xlsx")
+giap <- read_excel("Summer 2018/summer2018AllData.xlsx")
 ######################
 
 ######################
@@ -41,19 +41,29 @@ na_to_zero <- function(val){
 '%!in%' <- function(x,y)!('%in%'(x,y))
 ######################
 
-unit.names <- unique(giap$Unit.Name)
-hospital_name <- "HonorHealth Scottsdale Shea Medical Center"
+hospital_name <- "Duke Regional Hospital"
 
 giap <- giap %>% 
   filter(Hospital.Name == hospital_name) %>% 
   select(-Hospital.Name) %>%  
   mutate(Unit.Name = as.factor(Unit.Name))
 
-hospital_names <- unique(giap$`Unit.Name`)[!is.na(unique(giap$`Unit.Name`))]
+unit.names <- unique(giap$Unit.Name)[!is.na(unique(giap$`Unit.Name`))]
+
 
 cohort <- "Summer 2018"
 
-for(name in unit.names){
-  render("Scottsdale Shea Medical Center.Rmd", 
-         output_file = paste0("Scottsdale Shea Medical Center Results/", name, ".html"))
+result_path <- paste0("Summer 2018/Unit Level/Results/", hospital_name)
+
+if(!dir.exists(result_path)){
+  dir.create(result_path)
 }
+
+for(name in unit.names){
+  name_ <- gsub('/', ' ', name)
+  render("Summer 2018/Unit Level/Unit Level Report.Rmd", 
+         output_file = paste0(result_path, "/", name_, ".html"))
+}
+
+
+
