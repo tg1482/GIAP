@@ -1,0 +1,401 @@
+---
+title: "Winter 2017 Cohort"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, comment=NA, message=FALSE, warning=FALSE, fig.align = 'center', fig.width = 6, fig.asp=0.62, out.width = "70%")
+options(width=190)
+```
+
+```{r results='hide'}
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(descr)
+library(foreign)
+library(car)
+library(stringr)
+library(forcats)
+library(knitr)
+library(openxlsx)
+library(haven)
+library(scales)
+library(textclean)
+library(RColorBrewer)
+library(labelled)
+library(readr)
+library(lubridate)
+
+NICHE_colors <- c("#57068C","#6199AE","#FFC842","#314383","#6BAB8A","#F09C5D")
+
+DF <- read_csv("~/Desktop/NICHE/Implementation/Winter 2017/NICHE Program Year 1 Implementation Survey - Winter 2017 Cohort.csv")
+
+DF <- DF[-c(1,2),]
+
+DF <- to_factor(DF)
+
+impdim <- read.xlsx("~/Desktop/NICHE/Implementation/Implementation_Dimensions.xlsx", sheet = "Winter 2017 Cohort")
+
+firstup <- function(x) {
+   substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+x
+}
+
+wrap80 <- wrap_format(90)
+
+Any_Cert <- DF %>% select(ResponseId, starts_with("Q8C")) %>%
+  gather(Certification, Checked, -ResponseId) %>%
+  group_by(ResponseId) %>%
+  summarize(Any_Cert = any(!is.na(Checked))) %>%
+  summarize(round(mean(Any_Cert) * 100))
+
+Any_Cert_String <- firstup(as.character(replace_number(Any_Cert[1,1])))
+
+Cert_Top_Three <- DF %>% select(starts_with("Q8C")) %>%
+  gather(Certification, Checked) %>%
+  filter(!is.na(Checked)) %>%
+  count(Checked) %>%
+  arrange(desc(n)) %>%
+  head(n=3) %>%
+  select(Checked)
+```
+
+The following information and diagrams were compiled from the NICHE Year 1 Implementation Survey.  The data represent responses submitted by NICHE Coordinators in the same Leadership Training Program (LTP) Cohort.  Individual responses have been de-identified to maintain anonymity.
+
+## NICHE Program Leaders
+
+`r firstup(replace_number(round(mean(DF$Q4A == "Female") * 100)))` percent of the NICHE Coordinators of this LTP Cohort are female`r if(sum(DF$Q4A == "Male", na.rm = TRUE) == 0) "." else {paste(" and", round(mean(DF$Q4A == "Male") * 100), "percent are male.")}` On average, the NICHE Coordinators are `r round(mean(as.numeric(year(mdy_hm(DF$StartDate))) - as.numeric(DF$Q4C), na.rm = TRUE))` years of age and graduated between `r min(DF$Q4E, na.rm = TRUE)` and `r max(DF$Q4E, na.rm = TRUE)` with `r if(substr(names(tail(sort(prop.table(table(DF$Q4D))), n = 1)), 1, 1) %in% c('A','E','I','O','U')) "an" else {"a"}` `r names(tail(sort(prop.table(table(DF$Q4D))), n = 1))` as their first nursing degree.  `r firstup(replace_number(round(mean(DF$Q4D == "Master Degree", na.rm = TRUE) * 100)))` percent have earned a master's degree`r if(sum(DF$Q4D == "Doctorate (Doctor of Nursing Practice, DNP/ Nursing Doctorate, ND)", na.rm = TRUE) == 0) "." else {paste(" and", prop.table(table(DF$QDA == "Doctorate (Doctor of Nursing Practice, DNP/ Nursing Doctorate, ND)")) * 100, "percent have earned a doctorate.")}`  `r firstup(replace_number(round(mean(DF$Q6 == "Yes", na.rm = TRUE) * 100)))` percent of the NICHE Coordinators are certified by the American Nurses Credentialing Center (ANCC) in gerontology and `r replace_number(round(mean(DF$Q5 == "Yes", na.rm = TRUE) * 100))` percent served as Geriatric Resource Nurses prior to becoming a NICHE Coordinator.  `r firstup(replace_number(round(mean(DF$Q9 == "Yes", na.rm = TRUE) * 100)))` percent are Advanced Practice Nurses with most prepared as a `r names(tail(sort(table(DF$Q9A)), n = 1))`. `r Any_Cert_String` percent hold specialty certifications for Registered Nurses.  The most common certifications held by the NICHE Coordinators of this cohort are: 1) `r Cert_Top_Three[1,]`; 2) `r Cert_Top_Three[2,]`; and 3) `r Cert_Top_Three[3,]`.  `r firstup(replace_number(round(mean(DF$Q14 == "Yes", na.rm = TRUE) * 100)))` percent are members of hospital-wide committees responsible for clinical practice and policy development and `r replace_number(round(mean(DF$Q15 == "Yes", na.rm = TRUE) * 100))` percent are members of hospital-wide committees responsible for improving the quality of care for older adults.
+
+The following diagram illustrates clinical leadership roles the NICHE Coordinators have previously held at their respective organizations.
+
+```{r, fig.asp = .8}
+values <- c()
+for(i in 1:nrow(DF)){
+  row_values <- strsplit(DF$Q10[i], split=',(?!\\s)', perl = T)
+  values <- append(values, row_values)
+}
+
+values <- unlist(values)
+values <- values[values != "Other. Please provide response here:"]
+
+values %>% 
+  as.data.frame() %>%
+  `colnames<-`(c("value")) %>% 
+  count(value, sort = TRUE) %>%
+  filter(!is.na(value)) %>%
+  mutate(value = wrap80(value)) %>%
+  rename(Count = n) %>%
+  mutate(value = fct_reorder(value, row_number())) %>%
+  ggplot(aes(x = 1, y = Count)) + 
+  geom_point(color=NICHE_colors[1], size = 2) +
+  scale_x_continuous(limits=c(0.9,1.1), breaks = 1) +
+  scale_y_continuous(limits=c(0,12), breaks = seq(0,12,2)) +
+  ylab("Count") +
+  xlab("") +
+  facet_wrap(~ value, ncol = 1) +
+  theme_minimal() + 
+  theme(legend.title=element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank()) +
+  coord_flip() 
+```
+
+
+The following diagram illustrates the percent of time NICHE Coordinators devote to clinical practice responsibilities.
+
+```{r, fig.width=6, out.width="60%", fig.asp = .4}
+dat <- as.data.frame(table(DF$Q11))
+dat$fraction = dat$Freq / sum(dat$Freq)
+
+dat <- dat %>% 
+  mutate(Var1 = factor(Var1, levels = rev(c("90-100%", "75-90%", "45-75%", "20-45%", "Less than 20%"))))
+
+dat$ymax <- cumsum(dat$fraction)
+dat$ymin <- c(0, head(dat$ymax, n=-1))
+names(dat)[1] <- "Time.Clinical"
+
+ggplot(dat, aes(fill=Time.Clinical, ymax=ymax, ymin=ymin, xmax=4, xmin=3)) +
+     geom_rect(colour="white") +
+     coord_polar(theta="y") +
+     xlim(c(0, 4)) +
+     theme_void() +  
+     scale_fill_manual("", values = NICHE_colors[1:5])
+```
+
+The following diagram illustrates the average number of hours per week NICHE Coordinators spend leading and managing the NICHE program at their respective organizations.
+
+```{r, fig.width=6, out.width="60%", fig.asp = .4}
+dat <- as.data.frame(table(DF$Q12))
+dat$fraction = dat$Freq / sum(dat$Freq)
+
+dat <- dat %>% 
+  mutate(Var1 = factor(Var1, levels = rev(c("25-40 hours", "13-24 hours", "6-12 hours", "2-5 hours", 
+                                            "Less than 2 hours"))))
+
+dat$ymax <- cumsum(dat$fraction)
+dat$ymin <- c(0, head(dat$ymax, n=-1))
+names(dat)[1] <- "NICHE.Hours"
+
+ggplot(dat, aes(fill=NICHE.Hours, ymax=ymax, ymin=ymin, xmax=4, xmin=3)) +
+     geom_rect(colour="white") +
+     coord_polar(theta="y") +
+     xlim(c(0, 4)) +
+     theme_void() +  
+     scale_fill_manual("", values = NICHE_colors)
+```
+
+The following diagram identifies the different health care professionals that are members of the NICHE Program Steering Committee at organizations in this LTP Cohort.
+
+```{r, fig.asp = 1.3}
+values <- c()
+for(i in 1:nrow(DF)){
+  row_values <- strsplit(DF$Q3[i], ',')
+  values <- append(values, row_values)
+}
+
+values <- unlist(values)
+values <- values[values != "Other.  Please provide response here:"]
+
+values %>% 
+  as.data.frame() %>%
+  `colnames<-`(c("value")) %>% 
+  count(value, sort = TRUE) %>%
+  filter(!is.na(value)) %>%
+  mutate(value = wrap80(value)) %>%
+  rename(Count = n) %>%
+  mutate(value = fct_reorder(value, row_number())) %>%
+  ggplot(aes(x = 1, y = Count)) + 
+  geom_point(color=NICHE_colors[1], size = 2) +
+  scale_x_continuous(limits=c(0.9,1.1), breaks = 1) +
+  scale_y_continuous(limits=c(0,18), breaks = seq(0,18,2)) +
+  ylab("Count") +
+  xlab("") +
+  facet_wrap(~ value, ncol = 1) +
+  theme_minimal() + 
+  theme(legend.title=element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank()) +
+  coord_flip() 
+```
+
+## Geriatric Resource Nurse Program
+
+The following diagram illustrates criteria used to select the nursing units that pilot the Geriatric Resource Nurse (GRN) model at the organizations in this LTP Cohort.
+
+```{r, fig.asp = 0.85}
+values <- c()
+for(i in 1:nrow(DF)){
+  row_values <- strsplit(DF$Q20[i], split=',(?!\\s)', perl = T)
+  values <- append(values, row_values)
+}
+
+values <- unlist(values)
+values <- values[values != "Other. Please provide response here:"]
+
+values %>% 
+  as.data.frame() %>%
+  `colnames<-`(c("value")) %>% 
+  count(value, sort = TRUE) %>%
+  filter(!is.na(value)) %>%
+  mutate(value = wrap80(value)) %>%
+  rename(Count = n) %>%
+  mutate(value = fct_reorder(value, row_number())) %>%
+  ggplot(aes(x = 1, y = Count)) + 
+  geom_point(color=NICHE_colors[1], size = 2) +
+  scale_x_continuous(limits=c(0.9,1.1), breaks = 1) +
+  scale_y_continuous(limits=c(0,16), breaks = seq(0,16,2)) +
+  ylab("Count") +
+  xlab("") +
+  facet_wrap(~ value, ncol = 1) +
+  theme_minimal() + 
+  theme(legend.title=element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank()) +
+  coord_flip()
+```
+
+The following diagram illustrates the teaching methods used at the organizations in this LTP Cohort to deliver NICHE courses to front line nursing and support staff.
+
+```{r, fig.width=6, out.width="60%", fig.asp = .4}
+dat <- as.data.frame(table(DF$Q23))
+dat$fraction = dat$Freq / sum(dat$Freq)
+dat <- dat[order(dat$fraction), ]
+dat$ymax <- cumsum(dat$fraction)
+dat$ymin <- c(0, head(dat$ymax, n=-1))
+names(dat)[1] <- "Method"
+dat <- data.table(dat)
+dat[grepl("^Face", dat$Method), Method := "Face-to-face teaching"]
+dat[grepl("^Another", dat$Method), Method := "Another teaching model"]
+dat[grepl("^On-line", dat$Method), Method := "On-line teaching"]
+dat[grepl("^Blended", dat$Method), Method := "Blended learning"]
+dat$Method <- ordered(dat$Method, levels = c('Face-to-face teaching','On-line teaching','Blended learning','Another teaching model'))
+
+ggplot(dat, aes(fill=Method, ymax=ymax, ymin=ymin, xmax=4, xmin=3)) +
+     geom_rect(colour="white") +
+     coord_polar(theta="y") +
+     xlim(c(0, 4)) +
+     theme_void() +  
+     scale_fill_manual("", values = NICHE_colors[1:4])
+```
+
+The following diagram illustrates the timeframe during which nurses are expected to complete the 20-hour GRN course.
+
+```{r}
+temp <- DF %>% 
+  select(Q24) %>% 
+  mutate(Q24 = factor(Q24, levels = c("One month", "Two months", "Three months", "Four months", "Five months",
+                                      "Six months", "Seven months", "Eight months", "Nine months", "Ten months",
+                                      "Eleven months", "Twelve months", "More than one year"))) 
+table(temp$Q24) %>%
+  as.data.frame() %>%
+  mutate(Var1 = fct_reorder(Var1, row_number())) %>%
+  ggplot(aes(x=Var1, y = Freq)) + 
+  geom_bar(fill=NICHE_colors[1], color="white", stat = 'identity') +
+  ylab("Count") + xlab("") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 35, hjust = 1))
+```
+
+The following diagram illustrates the total release time allocated for staff to complete the GRN course at the organizations in this LTP Cohort.
+
+```{r}
+DF %>%
+  select(starts_with("Q25")) %>%
+  mutate(Q25 = to_factor(Q25)) %>%
+  filter(!is.na(Q25)) %>%
+  mutate(Q25B = ifelse(Q25 == "No", 0, Q25B),
+         Q25B = as.numeric(Q25B)) %>%
+  ggplot(aes(x=Q25B)) + geom_histogram(fill=NICHE_colors[1], color="white") +
+  ylab("Count") + xlab("Number of Hours") + theme(legend.title=element_blank()) +
+  theme_minimal()
+```
+
+The following diagram illustrates the total number of geriatric-specific continuing training hours that GRNs are required to complete each year at the organizations in this LTP Cohort.
+
+```{r}
+ggplot(DF, aes(x=as.numeric(Q26))) + geom_histogram(fill=NICHE_colors[1], color="white") + 
+  ylab("Count") + xlab("Total Geriatric-Specific Training Hours") + theme(legend.title=element_blank()) +
+  theme_minimal()
+```
+
+## Clinical Improvement and Practice Change Initiatives in Geriatric Care
+
+The following diagram illustrates the clinical problems that are the foci for quality improvement and practice change projects on the NICHE nursing units at the organizations in this LTP Cohort.
+
+```{r, fig.asp=1.8}
+values <- c()
+for(i in 1:nrow(DF)){
+  row_values <- strsplit(DF$Q28[i], split=',(?!\\s)', perl = T)
+  values <- append(values, row_values)
+}
+
+values <- unlist(values)
+values <- values[values != "Other. Please provide response here:"]
+
+values %>% 
+  as.data.frame() %>%
+  `colnames<-`(c("value")) %>% 
+  count(value, sort = TRUE) %>%
+  filter(!is.na(value)) %>%
+  mutate(value = wrap80(value)) %>%
+  rename(Count = n) %>%
+  mutate(value = fct_reorder(value, row_number())) %>%
+  ggplot(aes(x = 1, y = Count)) + 
+  geom_point(color=NICHE_colors[1], size = 2) +
+  scale_x_continuous(limits=c(0.9,1.1), breaks = 1) +
+  scale_y_continuous(limits=c(0,16), breaks = seq(0,16,2)) +
+  ylab("Count") +
+  xlab("") +
+  facet_wrap(~ value, ncol = 1) +
+  theme_minimal() + 
+  theme(legend.title=element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank()) +
+  coord_flip()
+```
+
+The following diagram illustrates the percent of organizations in this LTP Cohort that are implementing an Acute Care for Elders (ACE) Unit as part of their NICHE program.
+
+```{r, fig.width=6, out.width="60%", fig.asp = .4}
+dat <- as.data.frame(table(DF$Q29))
+dat <- dat %>% filter(Freq > 0)
+dat$fraction = dat$Freq / sum(dat$Freq)
+dat <- dat[order(dat$fraction), ]
+dat$ymax <- cumsum(dat$fraction)
+dat$ymin <- c(0, head(dat$ymax, n=-1))
+names(dat)[1] <- "ACE"
+
+ggplot(dat, aes(fill=ACE, ymax=ymax, ymin=ymin, xmax=4, xmin=3)) +
+     geom_rect(colour="white") +
+     coord_polar(theta="y") +
+     xlim(c(0, 4)) +
+     theme_void() +  
+     scale_fill_manual("", values = NICHE_colors[1:2])
+```
+
+The following diagram illustrates evidence-based Geriatric Care Models that are implemented at the organizations in this LTP Cohort in addition to the NICHE model.
+
+```{r}
+values <- c()
+for(i in 1:nrow(DF)){
+  row_values <- strsplit(DF$Q31[i], split=',(?!\\s)', perl = T)
+  values <- append(values, row_values)
+}
+
+values <- unlist(values)
+values <- values[values != "Other. Please provide response here:"]
+
+values %>% 
+  as.data.frame() %>%
+  `colnames<-`(c("value")) %>% 
+  count(value, sort = TRUE) %>%
+  filter(!is.na(value)) %>%
+  mutate(value = wrap80(value)) %>%
+  rename(Count = n) %>%
+  mutate(value = fct_reorder(value, row_number())) %>%
+  ggplot(aes(x = 1, y = Count)) + 
+  geom_point(color=NICHE_colors[1], size = 2) +
+  scale_x_continuous(limits=c(0.9,1.1), breaks = 1) +
+  scale_y_continuous(limits=c(0,12), breaks = seq(0,12,2)) +
+  ylab("Count") +
+  xlab("") +
+  facet_wrap(~ value, ncol = 1) +
+  theme_minimal() + 
+  theme(legend.title=element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank()) +
+  coord_flip()
+```
+
+## Implementation Stages
+
+The following charts represent this cohort's overall performance implementing the different dimensions of the NICHE program. Dimension criteria are based on the NICHE Levels of Implementation table that can be found in the Knowledge Center.
+
+```{r fig.width = 9, fig.asp=0.42, out.width = "90%"}
+impdim %>%
+  select(ID, Guiding_Principles:Quality) %>%
+  gather(Dimension, Rating, -ID) %>%
+  mutate(Rating = car::recode(Rating, "'NM'='Not Met';'PM'='Partially Met';'M'='Met'"),
+         Dimension = gsub("_", " ", Dimension)) %>%
+  count(Dimension, Rating) %>%
+  mutate(Dimension = ordered(Dimension, levels = rev(c('Guiding Principles','Organizational Structure','Leadership',
+                                                  'Staff Competence','Interdisciplinary Resources','Quality'))),
+         Rating = ordered(Rating, levels = rev(c('Not Met','Partially Met','Met')))) %>%
+  ggplot(aes(x = Dimension, y = n, fill = Rating)) +
+  geom_bar(position = "fill", stat = "identity", width = .6, color = "white") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = NICHE_colors[1:3]) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal()
+```
+
+```{r, fig.width=6, out.width="60%", fig.asp = .4}
+dat <- table(impdim$Implementation.Level) %>% as.data.frame()
+dat <- mutate(dat, Var1 = tools::toTitleCase(as.character(Var1)))
+dat <- dat %>% filter(Freq > 0)
+dat$fraction = dat$Freq / sum(dat$Freq)
+dat <- dat[order(dat$fraction), ]
+dat$ymax <- cumsum(dat$fraction)
+dat$ymin <- c(0, head(dat$ymax, n=-1))
+names(dat)[1] <- "ACE"
+
+ggplot(dat, aes(fill=ACE, ymax=ymax, ymin=ymin, xmax=4, xmin=3)) +
+     geom_rect(colour="white") +
+     coord_polar(theta="y") +
+     xlim(c(0, 4)) +
+     theme_void() +  
+     scale_fill_manual("", values = NICHE_colors[1:nrow(dat)])
+```
