@@ -58,6 +58,8 @@ na_to_zero <- function(val){
 
 cohort <- "February 2019"
 
+name <- "Duke University Hospital"
+
 for(name in hospital.names){
   render("Feb 2019/GIAP Individual Report.Rmd", 
          output_file = paste0("Feb 2019/results/", name, ".html"))
