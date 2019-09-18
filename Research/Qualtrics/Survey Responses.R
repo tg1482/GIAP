@@ -6,17 +6,18 @@ mem_data <- read_csv("Qualtrics/Membership Renewal Survey_Raw Data.csv")
 coord_data <- coord_data[-c(1,2),]
 mem_data <- mem_data[-c(1,2),]
 
-coord_data %>% View()
-
-nas <- c('na', 'n/a', 'NA', 'N/A', 'N/a', 'no')
+nas <- c('na', 'n/a', 'NA', 'N/A', 'N/a', 'no', 'none', 'NO', 'NONE')
+yes_no <- c("Yes", "No")
 
 useful_data <- function(entry){
   
-  len <- nchar(entry)
-  xs <- grep("x{2,}", entry, perl = T, value = F)
-  in_na <- entry %in% nas & is.na(entry)
+  len <- ifelse(is.na(entry), 0, nchar(entry))
+  is_upper <- entry == toupper(entry)
+  is_repeated <- grepl("([a-z])\\1{2,}", entry, perl = T) | grepl("([A-Z])\\1{3,}", entry, perl = T)
+  is_na <- entry %in% nas | is.na(entry)
+  is_yes_no <- entry %in% yes_no
   
-  if(xs != 1 & len > 4 & !in_na){
+  if(!is_repeated & (len >= 3 | is_yes_no | is_upper) & !is_na){
     return(entry)
   } else{
     return(NA) 
@@ -24,16 +25,10 @@ useful_data <- function(entry){
 
 }
 
-entry <- "fsdfsd"
+useful_data("zzz Hospital")
 
-coord_data %>% colnames()
+coord_data %>% 
+  rowwise() %>% 
+  mutate_at(vars(colnames(coord_data)[18:ncol(coord_data)]), useful_data) %>% 
+  View()
 
-coord_data <- coord_data %>% 
-  mutate_at(vars("Q7_1"), useful_data)
-
-View(coord_data)
-
-useful_data("xdse")
-
-le <- "gldsfs"
-nchar("gldsfs")
