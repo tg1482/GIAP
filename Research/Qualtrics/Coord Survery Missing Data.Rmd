@@ -1,14 +1,24 @@
+---
+title: "Missing Data Analysis NICHE Coordinator Data"
+author: "Tanmay Gupta"
+date: "September 25, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, warning = F, message = F, out.width = '80%')
 pacman::p_load(tidyverse, dplyr, ggplot2, VIM)
+```
 
-coord_data <- read_csv("Qualtrics/Coordinator Survey_Raw Data.csv")
-mem_data <- read_csv("Qualtrics/Membership Renewal Survey_Raw Data.csv")
-
+```{r}
+coord_data <- read_csv("Coordinator Survey_Raw Data.csv")
 coord_data <- coord_data[-c(1,2),]
-mem_data <- mem_data[-c(1,2),]
 
 nas <- c('na', 'n/a', 'NA', 'N/A', 'N/a', 'no', 'none', 'NO', 'NONE')
 yes_no <- c("Yes", "No")
+```
 
+```{r}
 useful_data <- function(entry){
   
   len <- ifelse(is.na(entry), 0, nchar(entry))
@@ -29,14 +39,34 @@ useful_data <- function(entry){
 coord_data <- coord_data %>% 
   rowwise() %>% 
   mutate_at(vars(colnames(coord_data)[18:ncol(coord_data)]), useful_data)
+```
 
+### Missing values by Question
+
+```{r}
 coord_data %>% 
   select_at(vars(colnames(coord_data)[18:ncol(coord_data)])) %>%
   select(-contains("TEXT")) %>% 
   aggr(., numbers = TRUE, prop = c(TRUE, FALSE))
+```
 
+```{r}
 coord_data$na_count <- apply(coord_data, 1, function(x) sum(is.na(x)))
+```
 
+### Missing values analysis by Hospital Type - Table
+
+```{r}
+coord_data %>% 
+  group_by(Q6) %>% 
+  summarize(mean_ = mean(na_count),
+            sd_ = sd(na_count),
+            count_ = n())
+```
+
+### Missing values analysis by Hospital Type - Histogram
+
+```{r}
 coord_data %>% 
   mutate(Q6 = as.factor(Q6)) %>% 
   ggplot(aes(x = na_count)) + 
@@ -44,15 +74,13 @@ coord_data %>%
   geom_vline(aes(xintercept=mean(na_count)),
              color="blue", linetype="dashed", size=1)+
   facet_grid(Q6~.)
+```
 
+### Missing values analysis by Hospital Type - Boxplot
+
+```{r}
 coord_data %>% 
   mutate(Q6 = as.factor(Q6)) %>% 
   ggplot(aes(y = na_count, x = Q6)) +
-  geom_boxplot()
-  
-  
-coord_data %>% 
-  group_by(Q6) %>% 
-  summarize(mean_ = mean(na_count),
-            sd_ = sd(na_count),
-            count_ = n())
+  geom_boxplot()s
+```
