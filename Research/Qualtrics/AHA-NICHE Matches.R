@@ -5,7 +5,7 @@ coord_data <- read_csv("Qualtrics/Coordinator Survey_Raw Data.csv")
 
 coord_data <- coord_data[-c(1,2),]
 
-nas <- c('na', 'n/a', 'NA', 'N/A', 'N/a', 'no', 'none', 'NO', 'NONE')
+nas <- c('na', 'n/a', 'NA', 'N/A', 'N/a', 'no', 'none', 'NO', 'NONE', '<NA>')
 yes_no <- c("Yes", "No")
 
 useful_data <- function(entry){
@@ -70,4 +70,15 @@ coord_add %>% View()
 ######################
 
 coord_names <- coord_names[-c(1, 5, 11, 16, 17, 28, 53, 90, 106, 120, 154, 158, 162, 169, 174, 179, 180, 196, 205, 206, 238),]
-coord_names
+coord_names %>% View()
+
+coord_add <- coord_add[-c(12, 37, 42),]
+coord_add
+
+merged_data <- merge(coord_data, coord_names, by.x=c("Q3"), by.y=c("coord_names"), all= F)
+
+merged_data <- merged_data[merged_data$aha_names!="",]
+
+merged_data <- merge(merged_data, aha_data, by.x = c("aha_names"), by.y=c("Hospital Name"), all = F)
+
+merged_data %>% View()
