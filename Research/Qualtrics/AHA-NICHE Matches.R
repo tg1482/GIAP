@@ -154,3 +154,10 @@ ggplot(merged_data, aes(x = Primary.Service, y = na_count)) +
   theme(
     panel.grid.minor = element_blank()
   )
+
+###########################
+
+# Saving data
+
+write.csv(merged_data_name, file = "Qualtrics/Coordinator Data with AHA.csv")
+write.csv(coord_data, file = "Qualtrics/Coordinator Data without AHA.csv")
