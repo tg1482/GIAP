@@ -26,6 +26,10 @@ useful_data <- function(entry){
 
 }
 
+#####################
+# Coordinator Data
+#####################
+
 coord_data <- coord_data %>% 
   rowwise() %>% 
   mutate_at(vars(colnames(coord_data)[18:ncol(coord_data)]), useful_data)
@@ -56,3 +60,25 @@ coord_data %>%
   summarize(mean_ = mean(na_count),
             sd_ = sd(na_count),
             count_ = n())
+
+
+#####################
+# Membership Data
+#####################
+
+mem_data %>% View()
+
+# The data seems clean enough to not use the useful_data function to clean
+# the dataframe. Skipping that part, we will now see how the NAs are distributed
+# across the dataframe
+
+mem_data %>% 
+  select_at(vars(colnames(mem_data)[18:ncol(mem_data)])) %>%
+  select(-contains("TEXT")) %>% 
+  aggr(., numbers = TRUE, prop = c(TRUE, FALSE))
+
+# It appears that a good portion of the missing data comes from asking
+# inconvenient questions such as providing the contact information of
+# the Marketing teams and IT teams (information regular employees would
+# have to look for). 
+
