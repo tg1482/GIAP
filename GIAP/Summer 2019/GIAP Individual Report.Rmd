@@ -517,212 +517,97 @@ giap %>%
 **Cohort**
 </center>
 
-```{r, fig.height=1, fig.width=9, fig.asp = .15, out.width = "95%"}
+```{r, fig.width=7, fig.height= 5 , out.width = "75%"}
+question <- "I am satisfied with my current job"
 
-cols <- c("Strongly Disagree" = "#AE6180",
-          "Disagree" = "#AE6180",
-          "Neither agree nor disagree" = "#A3A9AC", 
-          "Agree" = "#FFC842", 
-          "Strongly Agree" = "#6BAB8A")
+# Cohort
 
-graph_data_score <- giap %>%
-  filter(!is.na(Q32), Q32!=9) %>%
+cohort_data <- giap %>%
+  filter(!is.na(Q32), Q32 != 9) %>%
   rename(`Response` = Q32) %>%
-  count(`Response`) %>%
-  mutate(Percent = round(n / sum(n), 2),
-         Item = "I am satisfied with my current job",
-         Response_N = case_when(Response == 5 ~ "Disagree",
-                                Response == 4 ~ "Disagree",
-                                Response == 3 ~ "Neither agree nor disagree",
-                                Response == 2 ~ "Agree",
-                                Response == 1 ~ "Strongly Agree"),
-         Response_N = ordered(Response_N, levels = rev(c("Disagree",
-                                                     "Neither agree nor disagree",
-                                                     "Agree",
-                                                     "Strongly Agree"))),
-         Score = case_when(Response == 5 ~ 1,
-                           Response == 4 ~ 2,
-                           Response == 3 ~ 3,
-                           Response == 2 ~ 4,
-                           Response == 1 ~ 5),
-         Score = Score*n)
+  {sum(.$Response==1 | .$Response == 2)/cohort_n}
 
-graph_data <- aggregate(n ~ Response_N, FUN = sum, graph_data_score) %>% 
-  mutate(Item = "I am satisfied with my current job")
+# Hospital 
 
-  
-graph_data %>% 
-  ggplot(aes(x = (Item), y = n, fill = Response_N)) +
-  geom_bar(position = "fill", stat = "identity", width = .8, color = "white") +
-  geom_point(aes(x = (Item), y = sum(Score)/(5*(sum(n)))), 
-             shape = 8, 
-             size = 1.5, 
-             show.legend = FALSE, 
-             stroke = 0.5, 
-             data = graph_data_score) +
-  scale_y_continuous(labels = percent_format()) +
-  scale_fill_manual(values = cols) +
-  labs(y = "", x = "", fill = "") +
-  coord_flip() +
-  theme_minimal() +
-  theme(legend.position = "right", 
-        axis.ticks.y = element_blank(), 
-        panel.border = element_blank())
+hospital_data <- giap %>%
+  filter(!is.na(Q32), Q32 != 9, Hospital.Name==name) %>%
+  rename(`Response` = Q32) %>%
+  {sum(.$Response==1 | .$Response == 2)/hospital_n}
 
+df <- data.frame(matrix(nrow=2, ncol = 2))
+
+names(df) <- c("variable", "percentage")
+df$variable <- c("Cohort", name)
+df$percentage <- round(c(cohort_data, hospital_data),2)
+
+df <- df %>% mutate(group = ifelse(percentage <0.5, "red",
+                                 ifelse(percentage>=0.5 & percentage<0.75, "yellow","green")),
+                    label = paste0(percentage*100, "%"),
+                    title = wrap_35(variable))
+
+ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
+  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb") +
+  geom_rect() + 
+  coord_polar(theta = "y",start=-pi/2) + xlim(c(0, 2)) + ylim(c(0,2)) +
+  geom_text(aes(x = 0, y = 0, label = label, colour=group), size=6.5) +
+  geom_text(aes(x=1.5, y=1.5, label=title), size=4.2) + 
+  facet_wrap(~title, ncol = 2) +
+  theme_void() +
+  scale_fill_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  scale_colour_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  theme(strip.background = element_blank(),
+        strip.text.x = element_blank()) +
+  guides(fill=FALSE) +
+  guides(colour=FALSE)
 ```
 
-
-<center>
-**`r name`**
-</center>
-
-
-```{r, fig.height=1, fig.width=9, fig.asp = .15, out.width = "95%"}
-graph_data_score <- giap %>%
-  filter(!is.na(Q32), Q32!=9, Hospital.Name==name) %>%
-  rename(`Response` = Q32) %>%
-  count(`Response`) %>%
-  mutate(Percent = round(n / sum(n), 2),
-         Item = "I am satisfied with my current job",
-         Response_N = case_when(Response == 5 ~ "Disagree",
-                                Response == 4 ~ "Disagree",
-                                Response == 3 ~ "Neither agree nor disagree",
-                                Response == 2 ~ "Agree",
-                                Response == 1 ~ "Strongly Agree"),
-         Response_N = ordered(Response_N, levels = rev(c("Disagree",
-                                                     "Neither agree nor disagree",
-                                                     "Agree",
-                                                     "Strongly Agree"))),
-         Score = case_when(Response == 5 ~ 1,
-                           Response == 4 ~ 2,
-                           Response == 3 ~ 3,
-                           Response == 2 ~ 4,
-                           Response == 1 ~ 5),
-         Score = Score*n)
-
-
-
-graph_data <- aggregate(n ~ Response_N, FUN = sum, graph_data_score) %>% 
-  mutate(Item = "I am satisfied with my current job")
-
-graph_data %>% 
-  ggplot(aes(x = (Item), y = n, fill = Response_N)) +
-  geom_bar(position = "fill", stat = "identity", width = .8, color = "white") +
-  geom_point(aes(x = (Item), y = sum(Score)/(5*(sum(n)))), 
-             shape = 8, 
-             size = 1.5, 
-             show.legend = FALSE,
-             stroke = 0.5, 
-             data = graph_data_score) +
-  scale_y_continuous(labels = percent_format()) +
-  scale_fill_manual(values = cols) +
-  labs(y = "", x = "", fill = "") +
-  coord_flip() +
-  theme_minimal() +
-  theme(legend.position = "right", 
-        axis.ticks.y = element_blank(), 
-        panel.border = element_blank())
-```
 
 **This diagram depicts the extent to which the participating nurses find their work with older adults to be rewarding**
 
-<center>
-**Cohort**
-</center>
 
-```{r, fig.height=1, fig.width=9, fig.asp = .15, out.width = "95%"}
-wrap_35 <- wrap_format(35)
+```{r, fig.width=7, fig.height= 5 , out.width = "75%"}
+question <- "How rewarding is your work with older adults"
 
-cols <- c("Not rewarding" = "#AE6180",
-          "Neutral" = "#A3A9AC", 
-          "Somewhat rewarding" = "#FFC842",
-          "Very rewarding" = "#6BAB8A")
+# Cohort
 
-graph_data <- giap %>%
+cohort_data <- giap %>%
   filter(!is.na(Q12), Q12 != 9) %>%
   rename(`Response` = Q12) %>%
-  count(`Response`) %>%
-  mutate(Percent = round(n / sum(n), 2),
-         Item = "How rewarding is your work with older adults",
-         Response_N = case_when(Response == 4 ~ "Not rewarding",
-                           Response == 3 ~ "Neutral",
-                           Response == 2 ~ "Somewhat rewarding",
-                           Response == 1 ~ "Very rewarding"),
-         Response_N = ordered(Response_N, levels = rev(c("Not rewarding",
-                                                         "Neutral",
-                                                         "Somewhat rewarding",
-                                                         "Very rewarding"))),
-         Score = case_when(Response == 4 ~ 1,
-                           Response == 3 ~ 2,
-                           Response == 2 ~ 3,
-                           Response == 1 ~ 4),
-         Score = Score*n)
+  {sum(.$Response==1 | .$Response == 2)/cohort_n}
 
+# Hospital 
 
-
-graph_data %>% 
-  ggplot(aes(x = wrap_35(Item), y = n, fill = Response_N)) +
-  geom_bar(position = "fill", stat = "identity", width = .8, color = "white") +
-  geom_point(aes(x = wrap_35(Item), 
-                 y = sum(Score)/(4*(sum(n)))), 
-             shape = 8, size = 1.5, 
-             show.legend = FALSE, 
-             stroke = 0.5 ) +
-  scale_y_continuous(labels = percent_format()) +
-  scale_fill_manual(values = cols) +
-  labs(y = "", x = "", fill = "") +
-  coord_flip() +
-  theme_minimal() +
-  theme(legend.position = "right", 
-        axis.ticks.y = element_blank(), 
-        panel.border = element_blank())
-```
-
-<center>
-**`r name`**
-</center>
-
-```{r, fig.height=1, fig.width=9, fig.asp = .15, out.width = "95%"}
-graph_data <- giap %>%
+hospital_data <- giap %>%
   filter(!is.na(Q12), Q12 != 9, Hospital.Name==name) %>%
   rename(`Response` = Q12) %>%
-  count(`Response`) %>%
-  mutate(Percent = round(n / sum(n), 2),
-         Item = "How rewarding is your work with older adults",
-         Response_N = case_when(Response == 4 ~ "Not rewarding",
-                           Response == 3 ~ "Neutral",
-                           Response == 2 ~ "Somewhat rewarding",
-                           Response == 1 ~ "Very rewarding"),
-         Response_N = ordered(Response_N, levels = rev(c("Not rewarding",
-                                                         "Neutral",
-                                                         "Somewhat rewarding",
-                                                         "Very rewarding"))),
-         Score = case_when(Response == 4 ~ 1,
-                           Response == 3 ~ 2,
-                           Response == 2 ~ 3,
-                           Response == 1 ~ 4),
-         Score = Score*n)
+  {sum(.$Response==1 | .$Response == 2)/hospital_n}
 
+df <- data.frame(matrix(nrow=2, ncol = 2))
 
+names(df) <- c("variable", "percentage")
+df$variable <- c("Cohort", name)
+df$percentage <- round(c(cohort_data, hospital_data),2)
 
-graph_data %>% 
-  ggplot(aes(x = wrap_35(Item), y = n, fill = Response_N)) +
-  geom_bar(position = "fill", stat = "identity", width = .8, color = "white") +
-  geom_point(aes(x = wrap_35(Item), 
-                 y = sum(Score)/(4*(sum(n)))), 
-             shape = 8, size = 1.5, 
-             show.legend = FALSE, 
-             stroke = 0.5 ) +
-  scale_y_continuous(labels = percent_format()) +
-  scale_fill_manual(values = cols) +
-  labs(y = "", x = "", fill = "") +
-  coord_flip() +
-  theme_minimal() +
-  theme(legend.position = "right", 
-        axis.ticks.y = element_blank(), 
-        panel.border = element_blank())
+df <- df %>% mutate(group = ifelse(percentage <0.5, "red",
+                                 ifelse(percentage>=0.5 & percentage<0.75, "yellow","green")),
+                    label = paste0(percentage*100, "%"),
+                    title = wrap_35(variable))
+
+ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
+  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb") +
+  geom_rect() + 
+  coord_polar(theta = "y",start=-pi/2) + xlim(c(0, 2)) + ylim(c(0,2)) +
+  geom_text(aes(x = 0, y = 0, label = label, colour=group), size=6.5) +
+  geom_text(aes(x=1.5, y=1.5, label=title), size=4.2) + 
+  facet_wrap(~title, ncol = 2) +
+  theme_void() +
+  scale_fill_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  scale_colour_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  theme(strip.background = element_blank(),
+        strip.text.x = element_blank()) +
+  guides(fill=FALSE) +
+  guides(colour=FALSE)
 ```
-
 
 <center>
 #### **GIAP Results**
@@ -1331,39 +1216,49 @@ list(falls_h, skin_h, assess_h, delirium_h, urinary_h, nutrition_h, sleep_h,
 **Cohort Results**
 </center>
 
-```{r, fig.asp = .2, fig.width=14, out.width = "85%"}
-wrap_15 <- wrap_format(15)
-wrap_30 <- wrap_format(30)
+```{r, fig.width=7, fig.height= 5 , out.width = "75%"}
+question <- "Job your institution has done educating staff about the care of the older adult"
 
-cols <- c("Strongly Disagree" = "#474C4F",
-          "Disagree" = "#AE6180", 
-          "Neither Agree nor Disagree" = "#A3A9AC", 
-          "Agree" = "#FFC842", 
-          "Strongly Agree" = "#6BAB8A")
+# Cohort
 
-giap %>%
-  select(Hospital.Name, CASEID, Q17) %>%
-  gather(Item, Response, -Hospital.Name, -CASEID) %>% 
-  filter(!is.na(Response), Response != 9) %>%
-  mutate(Response = case_when(Response == 1 ~ "Strongly Disagree",
-                              Response == 2 ~ "Disagree",
-                              Response == 3 ~ "Neither Agree nor Disagree",
-                              Response == 4 ~ "Agree",
-                              Response == 5 ~ "Strongly Agree"),
-         Response = ordered(Response, levels = rev(c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree"))),
-         Item = case_when(Item == "Q17" ~ "Job your institution has done educating staff about the care of the older adult")) %>% 
-  count(Item, Response) %>%
-  mutate(Item = wrap_30(Item)) %>% 
-  ggplot(aes(x = Item, y = n, fill = Response)) +
-  geom_bar(position = "fill", stat = "identity", width = .5, color = "white") +
-  scale_y_continuous(labels = percent_format()) +
-  scale_fill_manual(values = cols) +
-  labs(y = "", x = "", fill = "") +
-  coord_flip() +
-  theme_minimal() +
-  theme(legend.position = "right", 
-        text = element_text(size = 20, color = "black"), 
-        panel.border = element_blank())
+cohort_data <- giap %>%
+  filter(!is.na(Q17), Q17 != 9) %>%
+  rename(`Response` = Q17) %>%
+  {sum(.$Response==1 | .$Response == 2)/cohort_n}
+
+# Hospital 
+
+hospital_data <- giap %>%
+  filter(!is.na(Q17), Q17 != 9, Hospital.Name==name) %>%
+  rename(`Response` = Q17) %>%
+  {sum(.$Response==1 | .$Response == 2)/hospital_n}
+
+df <- data.frame(matrix(nrow=2, ncol = 2))
+
+names(df) <- c("variable", "percentage")
+df$variable <- c("Cohort", name)
+df$percentage <- round(c(cohort_data, hospital_data),2)
+
+df <- df %>% mutate(group = ifelse(percentage <0.5, "red",
+                                 ifelse(percentage>=0.5 & percentage<0.75, "yellow","green")),
+                    label = paste0(percentage*100, "%"),
+                    title = wrap_35(variable))
+
+ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
+  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb") +
+  geom_rect() + 
+  coord_polar(theta = "y",start=-pi/2) + xlim(c(0, 2)) + ylim(c(0,2)) +
+  geom_text(aes(x = 0, y = 0, label = label, colour=group), size=6.5) +
+  geom_text(aes(x=1.5, y=1.5, label=title), size=4.2) + 
+  facet_wrap(~title, ncol = 2) +
+  theme_void() +
+  scale_fill_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  scale_colour_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  theme(strip.background = element_blank(),
+        strip.text.x = element_blank()) +
+  guides(fill=FALSE) +
+  guides(colour=FALSE)
+
 ```
 
 <center>
