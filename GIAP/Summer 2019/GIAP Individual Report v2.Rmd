@@ -7,22 +7,18 @@ bibliography: bibliography.bib
 nocite: | 
   @author1, @author2
 ---
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 6, fig.asp = 0.618, out.width = "80%", fig.align = "center", fig.show='hold')
 ```
-
 ```{r initialize}
 hospital_names <- unique(giap$`Hospital.Name`)[!is.na(unique(giap$`Hospital.Name`))]
 cohort_n <- nrow(giap)
 hospital_n <- nrow(giap %>% filter(Hospital.Name==name))
 id <- unique(giap$Hospital.ID[giap$Hospital.Name==name] %>% na.omit())
 ```
-
 ```{r, fig.align = "left", out.width='15%'}
 knitr::include_graphics("NICHE_logo.jpg")
 ```
-
 
 <center>
 # **Nurses Improving Care for Healthsystem Elders**
@@ -31,11 +27,12 @@ knitr::include_graphics("NICHE_logo.jpg")
 </center>
 
 #### **`r name`**
+
 **GIAP Overview**
 
-The Geriatric Institutional Assessment Profile (GIAP) is a baseline assessment of nurses' knowledge, skills, attitudes and perceptions regarding care for older adults. The information generated from the GIAP is used to identify strengths and prioritize opportunities to improve nursing practice to support clinical excellence in the care of older adults.     
+The Geriatric Institutional Assessment Profile (GIAP) is a baseline assessment of nurses' knowledge, skills, attitudes and perceptions regarding care for older adults. The information generated from the GIAP is used to identify strengths and prioritize opportunities to improve nursing practice to support clinical excellence in the care of older adults.    
 
-The GIAP (v.8) provides clinical leaders with information about nurses' perceptions regarding:     
+The GIAP (v.8) provides clinical leaders with information about nurses' perceptions regarding:    
 
 * Knowledge to identify and manage the geriatric syndromes 
 * Availability of specialized resource to care for older adults
@@ -47,9 +44,11 @@ The GIAP (v.8) provides clinical leaders with information about nurses' percepti
 
 The results are reported in two sections. The first section summarizes nurses' knowledge and skills to assess and manage the geriatric syndromes of delirium, falls, pressure injuries, and incontinence and the nursing problems of sleep, nutrition and hydration, medication management, and managing behaviors associated with dementia, depression, and cognitive decline. The second section summarizes nurses' views about the unit environment to support age-friendly care.
 
-We use the quality improvement convention of the red, yellow and green stop light colors to present the GIAP results. Where applicable, the mean score for the cohort and your hospital are marked with an asterisks (*). As you review the diagrams, yellow and green denote higher performance on each measure.   
-Following the generally accepted nursing education standards, a mean score of 80% demonstrates mastery of clinical knowledge required to identify and manage the common clinical conditions experienced by older adults. Drawing on insights from organizational change, we recommend that approximately 75% of nurses on the units involved in the NICHE initiative at your hospital will agree or strongly agree that they have access to the necessary clinical and organizational resources to support the delivery of age-friendly care on their units. 
+We use the quality improvement convention of the red, yellow and green stop light colors to present the GIAP results. Where applicable, the mean score for the cohort and your hospital are marked with an asterisks (*). As you review the diagrams, yellow and green denote higher performance on each measure.  
+Following the generally accepted nursing education standards, a mean score of 80% demonstrates mastery of clinical knowledge required to identify and manage the common clinical conditions experienced by older adults. Drawing on insights from organizational change, we recommend that approximately 75% of nurses on the units involved in the NICHE initiative at your hospital will agree or strongly agree that they have access to the necessary clinical and organizational resources to support the delivery of age-friendly care on their units.
+
 In the final section of this report, we offer recommendations for how to use the GIAP results to guide NICHE implementation efforts at your hospital.
+
 <center>
 #### **Nurse Characteristics**
 </center>
@@ -87,7 +86,6 @@ giap %>%
   column_spec(2, width = "10em") %>% 
   column_spec(3, width = "10em")
 ```
-
 
 ```{r}
 giap %>%
@@ -184,7 +182,6 @@ giap %>%
   column_spec(2, width = "10em") %>% 
   column_spec(3, width = "10em")
 ```
-
 
 ```{r}
 giap %>% 
@@ -349,7 +346,6 @@ giap %>%
   column_spec(2, width = "10em") %>% 
   column_spec(3, width = "10em")
 ```
-
 ```{r}
 giap %>%
   rename(NATLCERT = Q27) %>%
@@ -424,7 +420,6 @@ giap %>%
   column_spec(2, width = "10em") %>% 
   column_spec(3, width = "10em")
 ```
-
 ```{r}
 giap %>% 
   select(Q35) %>% 
@@ -466,7 +461,6 @@ giap %>%
   column_spec(2, width = "10em") %>% 
   column_spec(3, width = "10em")
 ```
-
 ```{r}
 giap %>% 
   select(Q36) %>% 
@@ -507,40 +501,27 @@ giap %>%
   column_spec(3, width = "10em") 
 ```
 
-
 **This diagram depicts the extent to which the participating nurses are satisfied with their job.**
-
-<center>
-**Cohort**
-</center>
-
 ```{r, fig.width=7, fig.height= 5 , out.width = "75%"}
 question <- "I am satisfied with my current job"
-
 # Cohort
-
 cohort_data <- giap %>%
   filter(!is.na(Q32), Q32 != 9) %>%
   rename(`Response` = Q32) %>%
   {sum(.$Response==1 | .$Response == 2)/cohort_n}
-
-# Hospital 
-
+# Hospital
 hospital_data <- giap %>%
   filter(!is.na(Q32), Q32 != 9, Hospital.Name==name) %>%
   rename(`Response` = Q32) %>%
   {sum(.$Response==1 | .$Response == 2)/hospital_n}
-
 df <- data.frame(matrix(nrow=2, ncol = 2))
 names(df) <- c("variable", "percentage")
 df$variable <- c("Cohort", name)
 df$percentage <- round(c(cohort_data, hospital_data),2)
-
 df <- df %>% mutate(group = ifelse(percentage <0.5, "red",
                                  ifelse(percentage>=0.5 & percentage<0.75, "yellow","green")),
                     label = paste0(percentage*100, "%"),
                     title = wrap_35(variable))
-
 ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
   geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb") +
   geom_rect() + 
@@ -557,9 +538,7 @@ ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
   guides(colour=FALSE)
 ```
 
-
 **This diagram depicts the extent to which the participating nurses find their work with older adults to be rewarding**
-
 
 ```{r, fig.width=7, fig.height= 5 , out.width = "75%"}
 question <- "How rewarding is your work with older adults"
@@ -570,12 +549,12 @@ cohort_data <- giap %>%
   rename(`Response` = Q12) %>%
   {sum(.$Response==1 | .$Response == 2)/cohort_n}
 
-# Hospital 
-
+# Hospital
 hospital_data <- giap %>%
   filter(!is.na(Q12), Q12 != 9, Hospital.Name==name) %>%
   rename(`Response` = Q12) %>%
   {sum(.$Response==1 | .$Response == 2)/hospital_n}
+
 df <- data.frame(matrix(nrow=2, ncol = 2))
 names(df) <- c("variable", "percentage")
 df$variable <- c("Cohort", name)
@@ -600,14 +579,11 @@ ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
   guides(fill=FALSE) +
   guides(colour=FALSE)
 ```
-
 <center>
 #### **GIAP Results**
 </center>
-
 **Baseline Knowledge of the Geriatric Syndromes**
-
-The following diagram illustrates nurses' knowledge of evidence-based interventions to manage common problems experienced by older adults. The results for the `r cohort` cohort and `r name` are presented below. The mean score for the correct answer for each clinical condition included in the GIAP is marked with an asterisks (*). A mean score of 80% or higher reflects nurses' mastery of the clinical knowledge needed to effectively assess, diagnose, and manage the geriatric syndromes and common nursing problems experienced by older adults during hospitalization.  
+The following diagram illustrates nurses' knowledge of evidence-based interventions to manage common problems experienced by older adults. The results for the `r cohort` cohort and `r name` are presented below. The mean score for the correct answer for each clinical condition included in the GIAP is marked with an asterisks (*). A mean score of 80% or higher reflects nurses' mastery of the clinical knowledge needed to effectively assess, diagnose, and manage the geriatric syndromes and common nursing problems experienced by older adults during hospitalization. 
 ```{r}
 knowledge <- giap %>%
   select(Hospital.Name, CASEID, Q42b, Q43c, Q44c, Q45b, Q46b, Q51b, Q47a, Q48d, Q49c, 
@@ -654,435 +630,494 @@ NICHE_colors <- c("#57068C","#6199AE","#FFC842","#314383","#6BAB8A","#F09C5D")
 #######################
 # Falls
 #######################
+
 falls_all <- knowledge %>% 
   select(Hospital.Name, CASEID, Falls) %>% 
   mutate(Score = Falls/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Falls")
+
 mean_list_all <- mean_temp$Score %>% 
   mean %>% 
   cbind("Falls") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question"))
+
 Falls <- mean_temp %>% 
   select(Hospital.Name, Score) %>% 
   group_by(Hospital.Name) %>% 
   summarize(Falls_H = mean(Score))
+
 falls_h <- knowledge %>% 
   filter(Hospital.Name == name) %>% 
   select(Hospital.Name, CASEID, Falls) %>% 
   mutate(Score = Falls/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Falls")
+
 mean_list_h <- mean_temp$Score %>% 
   mean %>% 
   cbind("Falls") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question"))
+
 #######################
 # Skin
 #######################
+
 skin_all <- knowledge %>% 
   select(Hospital.Name, CASEID, Skin) %>% 
   mutate(Score = Skin/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Skin")
+
 mean_list_all <- mean_temp$Score %>% 
   mean %>% 
   cbind("Skin") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_all)
+
 Skin <- mean_temp %>% 
   select(Hospital.Name, Score) %>% 
   group_by(Hospital.Name) %>% 
   summarize(Skin_H = mean(Score))
+
 skin_h <- knowledge %>% 
   filter(Hospital.Name == name) %>% 
   select(Hospital.Name, CASEID, Skin) %>% 
   mutate(Score = Skin/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Skin")
+
 mean_list_h <- mean_temp$Score %>% 
   mean %>% 
   cbind("Skin") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_h)
+
 #######################
 # Assess
 #######################
+
 assess_all <- knowledge %>% 
   select(Hospital.Name, CASEID, Assess) %>% 
   mutate(Score = Assess/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Assess")
+
 mean_list_all <- mean_temp$Score %>% 
   mean %>% 
   cbind("Assess") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_all)
+
 Assess <- mean_temp %>% 
   select(Hospital.Name, Score) %>% 
   group_by(Hospital.Name) %>% 
   summarize(Assess_H = mean(Score))
+
 assess_h <- knowledge %>% 
   filter(Hospital.Name == name) %>% 
   select(Hospital.Name, CASEID, Assess) %>% 
   mutate(Score = Assess/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Assess")
+
 mean_list_h <- mean_temp$Score %>% 
   mean %>% 
   cbind("Assess") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_h)
+
 #######################
 # Delirium
 #######################
+
 delirium_all <- knowledge %>% 
   select(Hospital.Name, CASEID, Delirium) %>% 
   mutate(Score = Delirium,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Delirium")
+
 mean_list_all <- mean_temp$Score %>% 
   mean %>% 
   cbind("Delirium") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_all)
+
 Delirium <- mean_temp %>% 
   select(Hospital.Name, Score) %>% 
   group_by(Hospital.Name) %>% 
   summarize(Delirium_H = mean(Score))
+
 delirium_h <- knowledge %>% 
   filter(Hospital.Name == name) %>% 
   select(Hospital.Name, CASEID, Delirium) %>% 
   mutate(Score = Delirium,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Delirium")
+
 mean_list_h <- mean_temp$Score %>% 
   mean %>% 
   cbind("Delirium") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_h)
+
 #######################
 # Urinary
 #######################
+
 urinary_all <- knowledge %>% 
   select(Hospital.Name, CASEID, Urinary) %>% 
   mutate(Score = Urinary/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Urinary")
+
 mean_list_all <- mean_temp$Score %>% 
   mean %>% 
   cbind("Urinary") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_all)
+
 Urinary <- mean_temp %>% 
   select(Hospital.Name, Score) %>% 
   group_by(Hospital.Name) %>% 
   summarize(Urinary_H = mean(Score))
+
 urinary_h <- knowledge %>% 
   filter(Hospital.Name == name) %>% 
   select(Hospital.Name, CASEID, Urinary) %>% 
   mutate(Score = Urinary/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Urinary")
+
 mean_list_h <- mean_temp$Score %>% 
   mean %>% 
   cbind("Urinary") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_h)
+
 #######################
 # Nutrition
 #######################
+
 nutrition_all <- knowledge %>% 
   select(Hospital.Name, CASEID, Nutrition) %>% 
   mutate(Score = Nutrition/3,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Nutrition")
+
 mean_list_all <- mean_temp$Score %>% 
   mean %>% 
   cbind("Nutrition") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_all)
+
 Nutrition <- mean_temp %>% 
   select(Hospital.Name, Score) %>% 
   group_by(Hospital.Name) %>% 
   summarize(Nutrition_H = mean(Score))
+
 nutrition_h <- knowledge %>% 
   filter(Hospital.Name == name) %>% 
   select(Hospital.Name, CASEID, Nutrition) %>% 
   mutate(Score = Nutrition/3,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Nutrition")
+
 mean_list_h <- mean_temp$Score %>% 
   mean %>% 
   cbind("Nutrition") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_h)
+
 #######################
 # Sleep
 #######################
+
 sleep_all <- knowledge %>% 
   select(Hospital.Name, CASEID, Sleep) %>% 
   mutate(Score = Sleep/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Sleep")
+
 mean_list_all <- mean_temp$Score %>% 
   mean %>% 
   cbind("Sleep") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_all)
+
 Sleep <- mean_temp %>% 
   select(Hospital.Name, Score) %>% 
   group_by(Hospital.Name) %>% 
   summarize(Sleep_H = mean(Score))
+
 sleep_h <- knowledge %>% 
   filter(Hospital.Name == name) %>% 
   select(Hospital.Name, CASEID, Sleep) %>% 
   mutate(Score = Sleep/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Sleep")
+
 mean_list_h <- mean_temp$Score %>% 
   mean %>% 
   cbind("Sleep") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_h)
+
 #######################
 # Dementia
 #######################
+
 dementia_all <- knowledge %>% 
   select(Hospital.Name, CASEID, Dementia) %>% 
   mutate(Score = Dementia/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Dementia")
+
 mean_list_all <- mean_temp$Score %>% 
   mean %>% 
   cbind("Dementia") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_all)
+
 Dementia <- mean_temp %>% 
   select(Hospital.Name, Score) %>% 
   group_by(Hospital.Name) %>% 
   summarize(Dementia_H = mean(Score))
+
 dementia_h <- knowledge %>% 
   filter(Hospital.Name == name) %>% 
   select(Hospital.Name, CASEID, Dementia) %>% 
   mutate(Score = Dementia/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Dementia")
+
 mean_list_h <- mean_temp$Score %>% 
   mean %>% 
   cbind("Dementia") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_h)
+
 #######################
 # Medication
 #######################
+
 medication_all <- knowledge %>% 
   select(Hospital.Name, CASEID, Medication) %>% 
   mutate(Score = Medication/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Medication")
+
 mean_list_all <- mean_temp$Score %>% 
   mean %>% 
   cbind("Medication") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_all)
+
 Medication <- mean_temp %>% 
   select(Hospital.Name, Score) %>% 
   group_by(Hospital.Name) %>% 
   summarize(Medication_H = mean(Score))
+
 medication_h <- knowledge %>% 
   filter(Hospital.Name == name) %>% 
   select(Hospital.Name, CASEID, Medication) %>% 
   mutate(Score = Medication/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Medication")
+
 mean_list_h <- mean_temp$Score %>% 
   mean %>% 
   cbind("Medication") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_h)
+
 #######################
 # Depression
 #######################
+
 depression_all <- knowledge %>% 
   select(Hospital.Name, CASEID, Depression) %>% 
   mutate(Score = Depression/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Depression")
+
 mean_list_all <- mean_temp$Score %>% 
   mean %>% 
   cbind("Depression") %>% 
   data.frame() %>% 
   setNames(c("Mean", "Question")) %>%  
   rbind(mean_list_all)
+
 Depression <- mean_temp %>% 
   select(Hospital.Name, Score) %>% 
   group_by(Hospital.Name) %>% 
   summarize(Depression_H = mean(Score))
+
 depression_h <- knowledge %>% 
   filter(Hospital.Name == name) %>% 
   select(Hospital.Name, CASEID, Depression) %>% 
   mutate(Score = Depression/2,
          Grade = case_when(Score < .30 ~ "Poor",
                            Score >= .30 & Score < .70 ~ "Fair",
-                           Score >= .70 ~ "Very Good"),
-         Grade = ordered(Grade, levels = c("Poor","Fair","Very Good"))) %>% 
+                           Score >= .70 ~ "Good"),
+         Grade = ordered(Grade, levels = c("Poor","Fair","Good"))) %>% 
   ungroup() %>%
   {. ->> mean_temp} %>% 
   count(Grade) %>%
   mutate(Percent = round(n / sum(n) * 100),
          Question = "Depression")
+
 mean_list_h <- mean_temp$Score %>% 
   mean %>% 
   cbind("Depression") %>% 
@@ -1093,18 +1128,17 @@ mean_list_h <- mean_temp$Score %>%
 <center>
 **Cohort Knowledge**
 </center>
-
 ```{r}
 cols <- c("Poor" = "#AE6180", 
           "Fair" = "#A3A9AC", 
-          "Very Good" = "#6BAB8A")
+          "Good" = "#6BAB8A")
 question_levels <- c("Assess", "Delirium", "Dementia", "Depression", "Falls", "Medication", "Nutrition", "Skin", "Sleep", "Urinary")
 mean_list_all$Mean <- as.numeric(as.character(mean_list_all$Mean))
 list(falls_all, skin_all, assess_all, delirium_all, urinary_all, nutrition_all, sleep_all, 
      dementia_all, medication_all, depression_all, mean_list_all) %>% 
   reduce(full_join) %>%
   mutate(Grade = ordered(Grade, 
-                         levels = c("Very Good", "Fair", "Poor")),
+                         levels = c("Good", "Fair", "Poor")),
          Question = ordered(Question, levels = rev(question_levels))) %>%
   ggplot(aes(x = Question, y = Percent/100, fill = Grade)) +
   geom_bar(position = "fill", stat = "identity", width = 0.06 * 11, color = "white") +
@@ -1118,7 +1152,6 @@ list(falls_all, skin_all, assess_all, delirium_all, urinary_all, nutrition_all, 
         axis.text.y = element_text(size = 7)) +
   coord_flip()
 ```
-
 <center>
   **`r name` Knowledge**
 </center>
@@ -1129,7 +1162,7 @@ list(falls_h, skin_h, assess_h, delirium_h, urinary_h, nutrition_h, sleep_h,
      dementia_h, medication_h, depression_h, mean_list_h) %>% 
   reduce(full_join) %>%
   mutate(Grade = ordered(Grade, 
-                         levels = c("Very Good", "Fair", "Poor")),
+                         levels = c("Good", "Fair", "Poor")),
          Question = ordered(Question, levels = rev(question_levels))) %>%
   ggplot(aes(x = Question, y = Percent/100, fill = Grade)) +
   geom_bar(position = "fill", stat = "identity", width = 0.06 * 11, color = "white") +
@@ -1143,25 +1176,55 @@ list(falls_h, skin_h, assess_h, delirium_h, urinary_h, nutrition_h, sleep_h,
         axis.text.y = element_text(size = 7)) +
   coord_flip()
 ```
-
 **This diagram depicts nurses' rating of organizational efforts to educate the workforce on the care of older adults.**
-
 <center>
 **Cohort Results**
 </center>
-
+```{r, fig.asp = .2, fig.width=14, out.width = "85%"}
+wrap_15 <- wrap_format(15)
+wrap_30 <- wrap_format(30)
+cols <- c("Strongly Disagree" = "#474C4F",
+          "Disagree" = "#AE6180", 
+          "Neither Agree nor Disagree" = "#A3A9AC", 
+          "Agree" = "#FFC842", 
+          "Strongly Agree" = "#6BAB8A")
+giap %>%
+  select(Hospital.Name, CASEID, Q17) %>%
+  gather(Item, Response, -Hospital.Name, -CASEID) %>% 
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Strongly Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Strongly Agree"),
+         Response = ordered(Response, levels = rev(c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree"))),
+         Item = case_when(Item == "Q17" ~ "Job your institution has done educating staff about the care of the older adult")) %>% 
+  count(Item, Response) %>%
+  mutate(Item = wrap_30(Item)) %>% 
+  ggplot(aes(x = Item, y = n, fill = Response)) +
+  geom_bar(position = "fill", stat = "identity", width = .5, color = "white") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "right", 
+        text = element_text(size = 20, color = "black"), 
+        panel.border = element_blank())
+ 
+```
 ```{r, fig.width=7, fig.height= 5 , out.width = "75%"}
 question <- "Job your institution has done educating staff about the care of the older adult"
 # Cohort
 cohort_data <- giap %>%
   filter(!is.na(Q17), Q17 != 9) %>%
   rename(`Response` = Q17) %>%
-  {sum(.$Response==1 | .$Response == 2)/cohort_n}
-# Hospital 
+  {sum(.$Response==4 | .$Response == 5)/cohort_n}
+# Hospital
 hospital_data <- giap %>%
   filter(!is.na(Q17), Q17 != 9, Hospital.Name==name) %>%
   rename(`Response` = Q17) %>%
-  {sum(.$Response==1 | .$Response == 2)/hospital_n}
+  {sum(.$Response==4 | .$Response == 5)/hospital_n}
 df <- data.frame(matrix(nrow=2, ncol = 2))
 names(df) <- c("variable", "percentage")
 df$variable <- c("Cohort", name)
@@ -1185,11 +1248,9 @@ ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
   guides(fill=FALSE) +
   guides(colour=FALSE)
 ```
-
 <center>
 **`r name` Results**
 </center>
-
 ```{r, fig.asp = .2, fig.width=14, out.width = "85%"}
 giap %>%
   filter(Hospital.Name == name) %>% 
@@ -1217,13 +1278,10 @@ giap %>%
         panel.border = element_blank())
 ```
 
-
 **Practice Environment**
-
-This section of the GIAP focuses on nurses' perceptions of the nursing unit to support age-friendly care. A practice environment that supports the unique care needs of older adults is characterized by: 1) the availability of specialized equipment and professional expertise; 2) holistic and person-centered care planning and care delivery processes; and 3) organizational values that support age-friendly care by taking older adults' unique needs into account in the design and delivery of care. This section concludes with nurses' assessment of the time and priority that managers, and other clinical leaders, place on implementing changes to improve the care of older adults on their unit.  
+This section of the GIAP focuses on nurses' perceptions of the nursing unit to support age-friendly care. A practice environment that supports the unique care needs of older adults is characterized by: 1) the availability of specialized equipment and professional expertise; 2) holistic and person-centered care planning and care delivery processes; and 3) organizational values that support age-friendly care by taking older adults' unique needs into account in the design and delivery of care. This section concludes with nurses' assessment of the time and priority that managers, and other clinical leaders, place on implementing changes to improve the care of older adults on their unit. 
 
 **Age-Friendly Care Planning and Patient-Centered Care**
-
 The following diagram illustrates nurses' perceptions regarding the organizational environment to provide nursing care tailored to the unique needs of older adults.
 
 <center>
@@ -1253,23 +1311,28 @@ giap %>%
                           Item == "Q7_7" ~ "Aging is considered as a factor when planning and evaluating care",
                           Item == "Q7_11" ~ "Staff receive information about the older adult's pre-hospitalization baseline",
                           Item == "Q7_13" ~ "There is continuity of care across settings")) %>%
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, paste0(Percent, '%'))) %>%
+  ungroup() %>% 
   mutate(Item = wrap_30(Item)) %>%
-  ggplot(aes(x = Item, y = n, fill = Response)) +
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
   geom_bar(position = "fill", stat = "identity", width = .6, color = "white") +
+  geom_text(aes(colour = Response), size = 3.5, position = position_fill(vjust = 0.5)) +
   scale_y_continuous(labels = percent_format()) +
   scale_fill_manual(values = cols) +
+  scale_colour_manual(values=c("black","black","black","white","white"), guide = FALSE) +
   labs(y = "", x = "", fill = "") +
   coord_flip() +
   theme_minimal() +
   theme(legend.position = "right", text = element_text(size = 20, color = "black"),
         plot.margin = unit(c(-0.3, 0, 0, 0), "cm"),
-        panel.border = element_blank())
+        panel.border = element_blank(),
+        axis.text.x=element_blank())
 ```
-
 <center>
 **`r name`**
 </center>
-
 ```{r,fig.width=13, fig.asp=.4}
 giap %>%
   filter(Hospital.Name==name) %>% 
@@ -1303,16 +1366,14 @@ giap %>%
 ```
 
 **Organizational Values to Support Age-Sensitive Care**
-
-The following diagram illustrates nurses' perceptions regarding organizational values to provide nursing care tailored to the unique needs of older adults.
+The following diagram illustrates nurses' perceptions regarding organizational values to provide nursing care tailored to the unique needs of older adults. 
 
 *(Note: These questions assess nurses' perceptions regarding barriers and the lack of specialized resources to care for older adults. For this diagram, higher levels of disagreement reflect nurses' perceptions that the organization values and supports care for older adults.)*
 
 <center>
 **Cohort Level**
 </center>
-
-```{r,fig.width=13, fig.height=5.5}
+```{r,fig.width=13, fig.height=4}
 giap %>%
   select(Q8_1, Q8_2, Q8_5, Q8_11, Q8_12) %>%
   gather(Item, Response) %>% 
@@ -1330,16 +1391,23 @@ giap %>%
                           Item == "Q8_11" ~ "Communication difficulties with older adults and their families",
                           Item == "Q8_12" ~ "Confusion over who is the appropriate decision maker for the older adult")) %>%
   mutate(Item = wrap_30(Item)) %>%
-  ggplot(aes(x = Item, y = n, fill = Response)) +
-  geom_bar(position = "fill", stat = "identity", width = .6, color = "white") +
+  group_by(Item) %>%
+  mutate(Percent = round(n / sum(n) * 100),
+         Percent = ifelse(Percent < 7, NA, paste0(Percent, '%'))) %>%
+  ungroup() %>%
+  ggplot(aes(x = Item, y = n, fill = Response, label = Percent)) +
+  geom_bar(position = "fill", stat = "identity", width = .5, color = "white") +
+  geom_text(aes(colour = Response), size = 4, position = position_fill(vjust = 0.5)) +
   scale_y_continuous(labels = percent_format()) +
   scale_fill_manual(values = cols) +
+  scale_colour_manual(values=c("black","black","black","white","white"), guide = FALSE) +
   labs(y = "", x = "", fill = "") +
   coord_flip() +
   theme_minimal() +
   theme(legend.position = "right", text = element_text(size = 20, color = "black"),
         plot.margin = unit(c(-0.3, 0, 0, 0), "cm"),
-        panel.border = element_blank())
+        panel.border = element_blank(),
+        axis.text.x=element_blank())
 ```
 
 <center>
@@ -1378,76 +1446,73 @@ giap %>%
 ```
 
 **Unit Environment to Support Improvements in the Care of Older Adults**
-
 The following diagram illustrates nurses' perceptions regarding the priority that nurse mangers and clinical leaders place on improving care for older adults.
 
 <center>
 **Cohort Level**
 </center>
 
-```{r, fig.width=13, fig.height=5.3}
+```{r, fig.width=9, fig.height=6, out.width='90%'}
 giap %>%
   select(Q7_26, Q7_27, Q7_28, Q7_29, Q7_30) %>%
   gather(Item, Response) %>% 
-  count(Item, Response) %>%
-  filter(!is.na(Response), Response != 9) %>%
-  mutate(Response = case_when(Response == 1 ~ "Strongly Disagree",
-                              Response == 2 ~ "Disagree",
-                              Response == 3 ~ "Neither Agree nor Disagree",
-                              Response == 4 ~ "Agree",
-                              Response == 5 ~ "Strongly Agree"),
-         Response = ordered(Response, levels = rev(c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree"))),
-         Item = case_when(Item == "Q7_26" ~ "The time required to manage common nursing problems experienced by older adults is factored into staff assignments",
-                          Item == "Q7_27" ~ "Training is readily available to staff that want to learn more about the care of older adults",
-                          Item == "Q7_28" ~ "Staff are encouraged to take time off from their regular work tasks to implement new care practices",
-                          Item == "Q7_29" ~ "The nurse administrators (unit managers, supervisors, senior leaders) take an active interest in improving care for older adults",
-                          Item == "Q7_30" ~ "Care of the older adult is a priority on my unit")) %>%
-  mutate(Item = wrap_30(Item)) %>%
-  ggplot(aes(x = Item, y = n, fill = Response)) +
-  geom_bar(position = "fill", stat = "identity", width = .6, color = "white") +
-  scale_y_continuous(labels = percent_format()) +
-  scale_fill_manual(values = cols) +
-  labs(y = "", x = "", fill = "") +
-  coord_flip() +
-  theme_minimal() +
-  theme(legend.position = "right", text = element_text(size = 20, color = "black"),
-        plot.margin = unit(c(-0.3, 0, 0, 0), "cm"),
-        panel.border = element_blank())
+  count(Item, Response) %>% 
+  group_by(Item) %>% 
+  mutate(Response = ifelse(is.na(Response), 6, Response),
+         Agree_n = ifelse(Response == 4 | Response == 5, n, 0)) %>% 
+  summarize(Agree_prop = sum(Agree_n, na.rm = T)/sum(n, na.rm = T)) %>% 
+  mutate(Agree_prop = round(Agree_prop, 2),
+         group = ifelse(Agree_prop <0.5, "red",
+                        ifelse(Agree_prop>=0.5 & Agree_prop<0.75, "yellow","green")),
+         label = paste0(Agree_prop*100, "%")) %>% 
+  ggplot(aes(fill = group, ymax = Agree_prop, ymin = 0, xmax = 2, xmin = 1)) +
+  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb") +
+  geom_rect() + 
+  coord_polar(theta = "y",start=-pi/2) + xlim(c(0, 2)) + ylim(c(0,2)) +
+  geom_text(aes(x = 0, y = 0, label = label, colour=group), size=6.5) +
+  geom_text(aes(x=1.5, y=1.5, label=Item), size=4.2) + 
+  facet_wrap(~Item, ncol = 5) +
+  theme_void() +
+  scale_fill_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  scale_colour_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  theme(strip.background = element_blank(),
+        strip.text.x = element_blank()) +
+  guides(fill=FALSE) +
+  guides(colour=FALSE)
 ```
 
 <center>
 **`r name`**
 </center>
 
-```{r, fig.width=13, fig.height=5.3}
+```{r,  fig.width=9, out.width='90%', fig.asp=0.667}
 giap %>%
-  filter(Hospital.Name==name) %>% 
+  filter(Hospital.Name == name) %>% 
   select(Q7_26, Q7_27, Q7_28, Q7_29, Q7_30) %>%
   gather(Item, Response) %>% 
-  count(Item, Response) %>%
-  filter(!is.na(Response), Response != 9) %>%
-  mutate(Response = case_when(Response == 1 ~ "Strongly Disagree",
-                              Response == 2 ~ "Disagree",
-                              Response == 3 ~ "Neither Agree nor Disagree",
-                              Response == 4 ~ "Agree",
-                              Response == 5 ~ "Strongly Agree"),
-         Response = ordered(Response, levels = rev(c("Strongly Disagree","Disagree","Neither Agree nor Disagree","Agree","Strongly Agree"))),
-         Item = case_when(Item == "Q7_26" ~ "The time required to manage common nursing problems experienced by older adults is factored into staff assignments",
-                          Item == "Q7_27" ~ "Training is readily available to staff that want to learn more about the care of older adults",
-                          Item == "Q7_28" ~ "Staff are encouraged to take time off from their regular work tasks to implement new care practices",
-                          Item == "Q7_29" ~ "The nurse administrators (unit managers, supervisors, senior leaders) take an active interest in improving care for older adults",
-                          Item == "Q7_30" ~ "Care of the older adult is a priority on my unit")) %>%
-  mutate(Item = wrap_30(Item)) %>%
-  ggplot(aes(x = Item, y = n, fill = Response)) +
-  geom_bar(position = "fill", stat = "identity", width = .6, color = "white") +
-  scale_y_continuous(labels = percent_format()) +
-  scale_fill_manual(values = cols) +
-  labs(y = "", x = "", fill = "") +
-  coord_flip() +
-  theme_minimal() +
-  theme(legend.position = "right", text = element_text(size = 20, color = "black"),
-        plot.margin = unit(c(-0.3, 0, 0, 0), "cm"),
-        panel.border = element_blank())
+  count(Item, Response) %>% 
+  group_by(Item) %>% 
+  mutate(Response = ifelse(is.na(Response), 6, Response),
+         Agree_n = ifelse(Response == 4 | Response == 5, n, 0)) %>% 
+  summarize(Agree_prop = sum(Agree_n, na.rm = T)/sum(n, na.rm = T)) %>% 
+  mutate(Agree_prop = round(Agree_prop, 2),
+         group = ifelse(Agree_prop <0.5, "red",
+                        ifelse(Agree_prop>=0.5 & Agree_prop<0.75, "yellow","green")),
+         label = paste0(Agree_prop*100, "%")) %>% 
+  ggplot(aes(fill = group, ymax = Agree_prop, ymin = 0, xmax = 2, xmin = 1)) +
+  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb") +
+  geom_rect() + 
+  coord_polar(theta = "y",start=-pi/2) + xlim(c(0, 2)) + ylim(c(0,2)) +
+  geom_text(aes(x = 0, y = 0, label = label, colour=group), size=6.5) +
+  geom_text(aes(x=1.5, y=1.5, label=Item), size=4.2) + 
+  facet_wrap(~Item, ncol = 5) +
+  theme_void() +
+  scale_fill_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  scale_colour_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  theme(strip.background = element_blank(),
+        strip.text.x = element_blank()) +
+  guides(fill=FALSE) +
+  guides(colour=FALSE)
 ```
 
 <center>
@@ -1459,14 +1524,12 @@ High quality care for older adults relies on two factors; a highly competent nur
 The results of the GIAP for the `r cohort` cohort suggests that nurses' knowledge regarding evidence-based practices to care for older adults is aligned with national trends [@author3]. There are opportunities to improve nurses' knowledge to both assess and use evidence-based interventions to address the problems of nutrition and hydration, incontinence, and managing behaviors associated with dementia and cognitive decline among the population of older adults receiving care at your hospital. Some poor practices or uncertainty regarding the best interventions to promote optimal health outcomes for older adults were also identified.
 
 In general, nurses perceive that organizational factors impede progress to deliver age-sensitive care. The participating staff identified a lack of time to both care for older adults and to devote to clinical practice change projects as barriers to providing age-friendly care on their units. The participating nurses also reported that there is a lack of equipment and professional expertise available to them on a daily basis to support high-quality care for older adults. Finally, participants reported that there is room for nurse managers and clinical leaders to communicate the importance of caring for older adults and to determine ways to integrate quality improvement and education into daily practice to develop clinical expertise and use evidence-based practices to care for older adults. 
-    
-
+   
 <center>
 **Summary**
 </center>
 
-This diagram summarizes the participating hospitals' performance on the knowledge and practice environment components of the GIAP survey. The majority of hospitals participating in the `r cohort` survey fall within the **Early Quadrant**. Your hospital is marked with a bold dot. 
-
+This diagram summarizes the participating hospitals' performance on the knowledge and practice environment components of the GIAP survey. The majority of hospitals participating in the `r cohort` survey fall within the **Early Quadrant**. Your hospital is marked with a bold dot.
 
 ```{r}
 ResAv <- giap %>%
@@ -1486,6 +1549,7 @@ ResAv <- giap %>%
   mutate(Resource_Availability_P = mean(Response)) %>%
   ungroup() %>%
   mutate(Resource_Availability_T = mean(Response))
+
 AgeSensCare <- giap %>%
   select(Hospital.Name, CASEID, 
          Q7_1, Q7_2, Q7_5, Q7_7, Q7_11, Q7_13) %>%
@@ -1504,6 +1568,7 @@ AgeSensCare <- giap %>%
   mutate(Age_Sensitive_Care_P = mean(Response)) %>%
   ungroup() %>%
   mutate(Age_Sensitive_Care_T = mean(Response))
+
 ImpClim <- giap %>%
   select(Hospital.Name, CASEID, 
          Q7_26, Q7_27, Q7_28, Q7_29, Q7_30) %>%
@@ -1521,6 +1586,7 @@ ImpClim <- giap %>%
   mutate(Implementation_Climate_P = mean(Response)) %>%
   ungroup() %>%
   mutate(Implementation_Climate_T = mean(Response))
+
 EduOpp <- giap %>%
   select(Hospital.Name, CASEID, 
          Q17) %>%
@@ -1534,6 +1600,7 @@ EduOpp <- giap %>%
   mutate(Edu_Opp_P = mean(Response)) %>%
   ungroup() %>%
   mutate(Edu_Opp_T = mean(Response))
+
 profile_DF <- list(ResAv %>% select(Hospital.Name, Resource_Availability_H) %>%unique(),
 AgeSensCare %>% select(Hospital.Name, Age_Sensitive_Care_H) %>% unique(),
 ImpClim %>% select(Hospital.Name, Implementation_Climate_H) %>% unique(),
@@ -1556,11 +1623,11 @@ Urinary %>% select(Hospital.Name, Urinary_H) %>% unique()) %>%
   ungroup() %>%
   mutate(Variable = forcats::fct_reorder(Variable, `Overall Average`)) %>%
   gather(Level, Value, c(`Hospital Average`, `Overall Average`)) %>%
-  mutate(Axis = ifelse(Variable %in% c("Assess", "Delirium", "Dementia", "Depression", "Falls", "Medication",
-                                       "Nutrition", "Skin", "Sleep", "Urinary"), "Knowledge", 
+  mutate(Axis = ifelse(Variable %in% c("Assess", "Delirium", "Dementia", "Depression", "Falls",
+                                       "Medication", "Nutrition", "Skin", "Sleep", "Urinary"),
+                       "Knowledge", 
                        "Practice Environment"))
 ```
-
 
 ```{r}
 profile_DF %>%
@@ -1593,18 +1660,15 @@ Hospitals in the ***early quadrant*** are characterized by gaps in nurses' knowl
 ##### **`r name`**
 ##### **Early**
 
-The information gained from the GIAP enables nurse managers and clinical leaders to prioritize continuing professional development and clinical quality improvement initiatives to implement the NICHE practice model. Based on your hospital's results we recommend: 
+The information gained from the GIAP enables nurse managers and clinical leaders to prioritize continuing professional development and clinical quality improvement initiatives to implement the NICHE practice model. Based on your hospital's results we recommend:
 
 1. **Workforce Education**
-
     * Work with the nurse educators and unit nurse managers to identify gaps in nurses' knowledge, skills or practice. Align the nursing education priorities with the broader nursing practice development agenda.  
-    
     * Initiate on-line or instructor-led staff education using the NICHE Geriatric Resource Nurse and Geriatric PCA/CNA programs.
     
     * Link continuing education priorities to the nursing process to identify gaps in staff's skills to assess, intervene, or evaluate nursing care to effectively manage  each geriatric syndrome or nursing problem. 
     
 2. **Develop the Practice Environment to Support Age-Friendly Care**
-
     * Review the NICHE Protocols and other national clinical practice guidelines to integrate evidence-based practices in the nursing care policies, procedures, documentation and reporting processes 
       + Establish nurse-led protocols for falls/mobility, pressure injury prevention, urinary catheter management, medication reconciliation, and discharge planning, patient and caregiver teaching 
       
@@ -1614,7 +1678,6 @@ The information gained from the GIAP enables nurse managers and clinical leaders
     * Establish a NICHE Steering Committee and collaborate with the nursing practice councils to review policies, procedures and documentation systems to standardize data collection and care planning approaches based on the NICHE Protocols and other national clinical practice guidelines for older adults. 
     
 3. **Share results and publicize nurses' accomplishments to establish Age-Friendly care**
-
     * If there are discrepancy between nurses' perceptions and the actual availability of equipment or specialty geriatric services at your hospital, consider a marketing campaign targeting the front line staff to raise awareness about these resources to support the care of older adults.
     
     * Work with your hospital's communications department to publicize staff participation in the NICHE program 
@@ -1623,44 +1686,33 @@ The information gained from the GIAP enables nurse managers and clinical leaders
     
 **Technical Note:  GIAP Survey and Data Analysis**
 
-This technical note provides an overview of the GIAP survey and the data analyses used to generate this report.
-
-The GIAP is assesses the following components of the nursing practice environment: 
+This technical note provides an overview of the GIAP survey and the data analyses used to generate this report. The GIAP is assesses the following components of the nursing practice environment:
 
 **Geriatric Nursing Knowledge**
-
 Nurses' abilities to recognize the multifactorial clinical problems commonly experienced by older adults and appropriately intervene is integral to improving clinical outcomes for older adults. The GIAP assess nurses' knowledge about evidence-based assessments and interventions to manage the geriatric syndromes of skin injuries, incontinence, falls, delirium, and the nursing problems of managing dementia and depression behaviors, sleep, nutrition and hydration, and medication management. A sample question from this section is: "Medications are the only way to treat behavioral symptoms in persons living with dementia."
 
 **Specialized Resources**
-
 This scale assesses nurses' perceptions about the availably of specialized resources to deliver care to older adults. Respondents are asked to rate the extent to which durable medical equipment, clinical resources, and information from colleagues and families are available to plan and implement care for older adults. A sample question from this scale is: "Lack of written policies and procedures specific to the older adult population are a barrier to providing care to older adults."
-
  
 **Age-Friendly Care Planning and Delivery**
-
-This scale assesses nurses' perceptions about the organization and delivery of nursing care that takes the unique physical, emotional and psychological needs of older adults into account.   Respondents are asked to rate the extent to which they agree or disagree with a series of questions on a five-point Likert agreement scale. A sample question from this scale is: "Staff provided individualized, person-centered care." 
+This scale assesses nurses' perceptions about the organization and delivery of nursing care that takes the unique physical, emotional and psychological needs of older adults into account.   Respondents are asked to rate the extent to which they agree or disagree with a series of questions on a five-point Likert agreement scale. A sample question from this scale is: "Staff provided individualized, person-centered care."
 
 **Organizational Values to Support Age-Friendly Care**
-
-The organizational values scale assesses nurses' perceptions of the ways that staff work together to create a practice environment that values and supports the unique care needs of older adults. Respondents are asked to rate the extent to which they agree with a series of statements on a five-point Likert scale. A sample question from this scale is "Clinicians and administrators work together to solve problems facing older adult patients." 
+The organizational values scale assesses nurses' perceptions of the ways that staff work together to create a practice environment that values and supports the unique care needs of older adults. Respondents are asked to rate the extent to which they agree with a series of statements on a five-point Likert scale. A sample question from this scale is "Clinicians and administrators work together to solve problems facing older adult patients."
 
 **Unit Environment to Support Improvements in Care of Older Adults**
-
-Changing nursing practice to improve the quality of care is challenging and requires a well-defined change management plan. The questions in the unit environment scale provides information about nurses' perceptions of the time required to care for older adults and the role of the nurse managers and clinical leaders to support the use of evidence-based clinical practices know to improve health outcomes for older adults. A sample question from this scale is "Care of the older adult is a priority on my unit."   
-
+Changing nursing practice to improve the quality of care is challenging and requires a well-defined change management plan. The questions in the unit environment scale provides information about nurses' perceptions of the time required to care for older adults and the role of the nurse managers and clinical leaders to support the use of evidence-based clinical practices know to improve health outcomes for older adults. A sample question from this scale is "Care of the older adult is a priority on my unit."  
 The GIAP scales each contain between five and eleven questions and the coefficient alphas for the scales range between 0.81 and 0.94.
 
 **Sample**
-
 Registered nurses and nursing assistants/patient care associates between the ages of 18 -70 years, working on the nursing units implementing the NICHE nursing practice model, were invited to participate in the GIAP. Staff working on a full-time or part-time basis are eligible to participate in the survey. Because the GIAP focuses on nurses' knowledge and perceptions, the sample is limited to nursing personnel.
 
-18 NICHE member hospitals participated in the `r cohort` GIAP survey. Within the 18 hospitals, 3738 nurses were eligible to participate. We received complete data from 1083 respondents, which equates to a 27.97% response rate.
+`r num_hospitals` NICHE member hospitals participated in the `r cohort` GIAP survey. Within the `r num_hospitals` hospitals, `r elibigle_nurses` nurses were eligible to participate. We received complete data from `r responded_nurses` respondents, which equates to a `r round(responded_nurses/eligible_nurses*100, 2)`% response rate.
 
 **Data analysis**
-
 The data were pooled across participating hospitals. We analyzed the cohort and individual hospital data using descriptive statistics.
 
-*Knowledge Scores:* The percentage of correct responses were calculated for each topic and the mean score is marked with an asterisk. Following standard practice in continuing nursing education, a mean score of 80% denotes nurses' mastery of interventions to effectively identify and manage common health problems and complications of hospitalization experienced by older adults.  
+*Knowledge Scores:* The percentage of correct responses were calculated for each topic and the mean score is marked with an asterisk. Following standard practice in continuing nursing education, a mean score of 80% denotes nurses' mastery of interventions to effectively identify and manage common health problems and complications of hospitalization experienced by older adults. 
 
 *Scale construction:* The survey data were aggregated to the unit-level and reported for each participating hospital. The aggregated cohort data provides insights into the state of geriatric nursing practice at participating hospitals and can be used to inform the development of policies, procedures and services to support age-friendly nursing care.
 

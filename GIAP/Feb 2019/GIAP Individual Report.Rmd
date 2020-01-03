@@ -14,7 +14,8 @@ knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fi
 
 ```{r initialize}
 hospital_names <- unique(giap$`Hospital.Name`)[!is.na(unique(giap$`Hospital.Name`))]
-
+cohort_n <- nrow(giap)
+hospital_n <- nrow(giap %>% filter(Hospital.Name==name))
 id <- unique(giap$Hospital.ID[giap$Hospital.Name==name] %>% na.omit())
 ```
 
@@ -517,6 +518,7 @@ giap %>%
 </center>
 
 ```{r, fig.height=1, fig.width=9, fig.asp = .15, out.width = "95%"}
+
 cols <- c("Strongly Disagree" = "#AE6180",
           "Disagree" = "#AE6180",
           "Neither agree nor disagree" = "#A3A9AC", 
@@ -530,10 +532,10 @@ graph_data_score <- giap %>%
   mutate(Percent = round(n / sum(n), 2),
          Item = "I am satisfied with my current job",
          Response_N = case_when(Response == 5 ~ "Disagree",
-                           Response == 4 ~ "Disagree",
-                           Response == 3 ~ "Neither agree nor disagree",
-                           Response == 2 ~ "Agree",
-                           Response == 1 ~ "Strongly Agree"),
+                                Response == 4 ~ "Disagree",
+                                Response == 3 ~ "Neither agree nor disagree",
+                                Response == 2 ~ "Agree",
+                                Response == 1 ~ "Strongly Agree"),
          Response_N = ordered(Response_N, levels = rev(c("Disagree",
                                                      "Neither agree nor disagree",
                                                      "Agree",
@@ -547,6 +549,7 @@ graph_data_score <- giap %>%
 
 graph_data <- aggregate(n ~ Response_N, FUN = sum, graph_data_score) %>% 
   mutate(Item = "I am satisfied with my current job")
+
   
 graph_data %>% 
   ggplot(aes(x = (Item), y = n, fill = Response_N)) +
@@ -565,11 +568,14 @@ graph_data %>%
   theme(legend.position = "right", 
         axis.ticks.y = element_blank(), 
         panel.border = element_blank())
+
 ```
+
 
 <center>
 **`r name`**
 </center>
+
 
 ```{r, fig.height=1, fig.width=9, fig.asp = .15, out.width = "95%"}
 graph_data_score <- giap %>%
@@ -579,10 +585,10 @@ graph_data_score <- giap %>%
   mutate(Percent = round(n / sum(n), 2),
          Item = "I am satisfied with my current job",
          Response_N = case_when(Response == 5 ~ "Disagree",
-                           Response == 4 ~ "Disagree",
-                           Response == 3 ~ "Neither agree nor disagree",
-                           Response == 2 ~ "Agree",
-                           Response == 1 ~ "Strongly Agree"),
+                                Response == 4 ~ "Disagree",
+                                Response == 3 ~ "Neither agree nor disagree",
+                                Response == 2 ~ "Agree",
+                                Response == 1 ~ "Strongly Agree"),
          Response_N = ordered(Response_N, levels = rev(c("Disagree",
                                                      "Neither agree nor disagree",
                                                      "Agree",
@@ -594,16 +600,18 @@ graph_data_score <- giap %>%
                            Response == 1 ~ 5),
          Score = Score*n)
 
+
+
 graph_data <- aggregate(n ~ Response_N, FUN = sum, graph_data_score) %>% 
   mutate(Item = "I am satisfied with my current job")
-  
+
 graph_data %>% 
   ggplot(aes(x = (Item), y = n, fill = Response_N)) +
   geom_bar(position = "fill", stat = "identity", width = .8, color = "white") +
   geom_point(aes(x = (Item), y = sum(Score)/(5*(sum(n)))), 
              shape = 8, 
              size = 1.5, 
-             show.legend = FALSE, 
+             show.legend = FALSE,
              stroke = 0.5, 
              data = graph_data_score) +
   scale_y_continuous(labels = percent_format()) +
@@ -627,7 +635,7 @@ wrap_35 <- wrap_format(35)
 
 cols <- c("Not rewarding" = "#AE6180",
           "Neutral" = "#A3A9AC", 
-          "Somewhat rewarding" = "#FFC842", 
+          "Somewhat rewarding" = "#FFC842",
           "Very rewarding" = "#6BAB8A")
 
 graph_data <- giap %>%
@@ -641,19 +649,25 @@ graph_data <- giap %>%
                            Response == 2 ~ "Somewhat rewarding",
                            Response == 1 ~ "Very rewarding"),
          Response_N = ordered(Response_N, levels = rev(c("Not rewarding",
-                                                     "Neutral",
-                                                     "Somewhat rewarding",
-                                                     "Very rewarding"))),
+                                                         "Neutral",
+                                                         "Somewhat rewarding",
+                                                         "Very rewarding"))),
          Score = case_when(Response == 4 ~ 1,
                            Response == 3 ~ 2,
                            Response == 2 ~ 3,
                            Response == 1 ~ 4),
          Score = Score*n)
 
+
+
 graph_data %>% 
   ggplot(aes(x = wrap_35(Item), y = n, fill = Response_N)) +
   geom_bar(position = "fill", stat = "identity", width = .8, color = "white") +
-  geom_point(aes(x = wrap_35(Item), y = sum(Score)/(4*(sum(n)))), shape = 8, size = 1.5, show.legend = FALSE, stroke = 0.5 ) +
+  geom_point(aes(x = wrap_35(Item), 
+                 y = sum(Score)/(4*(sum(n)))), 
+             shape = 8, size = 1.5, 
+             show.legend = FALSE, 
+             stroke = 0.5 ) +
   scale_y_continuous(labels = percent_format()) +
   scale_fill_manual(values = cols) +
   labs(y = "", x = "", fill = "") +
@@ -680,19 +694,25 @@ graph_data <- giap %>%
                            Response == 2 ~ "Somewhat rewarding",
                            Response == 1 ~ "Very rewarding"),
          Response_N = ordered(Response_N, levels = rev(c("Not rewarding",
-                                                     "Neutral",
-                                                     "Somewhat rewarding",
-                                                     "Very rewarding"))),
+                                                         "Neutral",
+                                                         "Somewhat rewarding",
+                                                         "Very rewarding"))),
          Score = case_when(Response == 4 ~ 1,
                            Response == 3 ~ 2,
                            Response == 2 ~ 3,
                            Response == 1 ~ 4),
          Score = Score*n)
 
+
+
 graph_data %>% 
   ggplot(aes(x = wrap_35(Item), y = n, fill = Response_N)) +
   geom_bar(position = "fill", stat = "identity", width = .8, color = "white") +
-  geom_point(aes(x = wrap_35(Item), y = sum(Score)/(4*(sum(n)))), shape = 8, size = 1.5, show.legend = FALSE, stroke = 0.5 ) +
+  geom_point(aes(x = wrap_35(Item), 
+                 y = sum(Score)/(4*(sum(n)))), 
+             shape = 8, size = 1.5, 
+             show.legend = FALSE, 
+             stroke = 0.5 ) +
   scale_y_continuous(labels = percent_format()) +
   scale_fill_manual(values = cols) +
   labs(y = "", x = "", fill = "") +
@@ -702,6 +722,7 @@ graph_data %>%
         axis.ticks.y = element_blank(), 
         panel.border = element_blank())
 ```
+
 
 <center>
 #### **GIAP Results**
