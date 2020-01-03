@@ -523,7 +523,7 @@ df <- df %>% mutate(group = ifelse(percentage <0.5, "red",
                     label = paste0(percentage*100, "%"),
                     title = wrap_35(variable))
 ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
-  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb") +
+  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb", color = 'black') +
   geom_rect() + 
   coord_polar(theta = "y",start=-pi/2) + xlim(c(0, 2)) + ylim(c(0,2)) +
   geom_text(aes(x = 0, y = 0, label = label, colour=group), size=6.5) +
@@ -565,7 +565,7 @@ df <- df %>% mutate(group = ifelse(percentage <0.5, "red",
                     title = wrap_35(variable))
 
 ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
-  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb") +
+  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb", color = 'black') +
   geom_rect() + 
   coord_polar(theta = "y",start=-pi/2) + xlim(c(0, 2)) + ylim(c(0,2)) +
   geom_text(aes(x = 0, y = 0, label = label, colour=group), size=6.5) +
@@ -1152,6 +1152,26 @@ list(falls_all, skin_all, assess_all, delirium_all, urinary_all, nutrition_all, 
         axis.text.y = element_text(size = 7)) +
   coord_flip()
 ```
+
+```{r}
+mean_list_all %>% 
+  ggplot( aes(x=Question, y=Mean)) +
+  geom_segment( aes(x=Question ,xend=Question, y=0, yend=Mean), color="grey") +
+  geom_point(size=5, color="#69b3a2") +
+  coord_flip() +
+  theme(
+    panel.grid.minor.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    axis.text = element_text( size=12 ),
+    legend.position="none"
+  ) +
+  theme_minimal() +
+  ylim(0,1) +
+  ylab("") +
+  xlab("")
+```
+
+
 <center>
   **`r name` Knowledge**
 </center>
@@ -1466,7 +1486,7 @@ giap %>%
                         ifelse(Agree_prop>=0.5 & Agree_prop<0.75, "yellow","green")),
          label = paste0(Agree_prop*100, "%")) %>% 
   ggplot(aes(fill = group, ymax = Agree_prop, ymin = 0, xmax = 2, xmin = 1)) +
-  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb") +
+  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb", color = 'black') +
   geom_rect() + 
   coord_polar(theta = "y",start=-pi/2) + xlim(c(0, 2)) + ylim(c(0,2)) +
   geom_text(aes(x = 0, y = 0, label = label, colour=group), size=6.5) +
@@ -1500,7 +1520,7 @@ giap %>%
                         ifelse(Agree_prop>=0.5 & Agree_prop<0.75, "yellow","green")),
          label = paste0(Agree_prop*100, "%")) %>% 
   ggplot(aes(fill = group, ymax = Agree_prop, ymin = 0, xmax = 2, xmin = 1)) +
-  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb") +
+  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb", color = 'black') +
   geom_rect() + 
   coord_polar(theta = "y",start=-pi/2) + xlim(c(0, 2)) + ylim(c(0,2)) +
   geom_text(aes(x = 0, y = 0, label = label, colour=group), size=6.5) +
@@ -1707,7 +1727,7 @@ The GIAP scales each contain between five and eleven questions and the coefficie
 **Sample**
 Registered nurses and nursing assistants/patient care associates between the ages of 18 -70 years, working on the nursing units implementing the NICHE nursing practice model, were invited to participate in the GIAP. Staff working on a full-time or part-time basis are eligible to participate in the survey. Because the GIAP focuses on nurses' knowledge and perceptions, the sample is limited to nursing personnel.
 
-`r num_hospitals` NICHE member hospitals participated in the `r cohort` GIAP survey. Within the `r num_hospitals` hospitals, `r elibigle_nurses` nurses were eligible to participate. We received complete data from `r responded_nurses` respondents, which equates to a `r round(responded_nurses/eligible_nurses*100, 2)`% response rate.
+`r num_hospitals` NICHE member hospitals participated in the `r cohort` GIAP survey. Within the `r num_hospitals` hospitals, `r eligible_nurses` nurses were eligible to participate. We received complete data from `r responded_nurses` respondents, which equates to a `r round(responded_nurses/eligible_nurses*100, 2)`% response rate.
 
 **Data analysis**
 The data were pooled across participating hospitals. We analyzed the cohort and individual hospital data using descriptive statistics.

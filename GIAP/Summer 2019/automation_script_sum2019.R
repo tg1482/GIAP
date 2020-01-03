@@ -55,8 +55,11 @@ na_to_zero <- function(val){
 # Automating report generation across all hospitals
 
 cohort <- "Summer 2019"
-
 name <- "University of Virginia Medical Center"
+num_hospitals <- length(unique(giap$Hospital.ID))
+eligible_nurses <- 3738
+responded_nurses <- nrow(giap)
+
 
 #for(name in hospital.names){
 #  render("Summer 2019/GIAP Individual Report.Rmd", 
@@ -64,5 +67,5 @@ name <- "University of Virginia Medical Center"
 #}
 ######################
 
-render("Summer 2019/GIAP Individual Report.Rmd", 
+render("Summer 2019/GIAP Individual Report v2.Rmd", 
        output_file = paste0("Summer 2019/results/", name, ".html"))
