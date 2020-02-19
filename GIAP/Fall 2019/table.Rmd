@@ -1,5 +1,5 @@
 ---
-title: "Table"
+title: "Table 2"
 author: "Tanmay Gupta"
 date: "February 19, 2020"
 output: html_document
@@ -9,9 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-| Timing       | Step        | NICHE Steering Committee                                                                                                                                                                                      | Unit Manager/NICHE Coordinator                                                                                                                                                                |
-|--------------|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 30 days      | Communicate | * Communicate survey results to managers, committee, staff * Identify and agree on next steps in action planning process * Set expectations, accountability and timeline to address improvement opportunities | * Thank team for participating in the GIAP. Present awards or special recognition as appropriate. * Create awareness about the NICHE action plan * Set expectations, accountability, timeline |
-| 30 - 60 days | Develop     | * Meet as a senior team to review results and develop a global action plan * Focus on identifying strengths and key drivers to achieve objectives for care of older adults                                    |                                                                                                                                                                                               |
-|              |             |                                                                                                                                                                                                               |                                                                                                                                                                                               |
-|              |             |                                                                                                         
+```{r showChoro1}
+htmltools::includeHTML("table_html_code.txt")
+```

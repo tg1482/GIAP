@@ -66,20 +66,10 @@ Action Plan Steps
 
 We recommend the following action plan to establish NICHE at your hospital
 
-```{r eval=FALSE}
-print("Do not edit table!")
+```{r action_plan_table}
+htmltools::includeHTML("table_html_code.txt")
 ```
 
-
-| Timing              | Step        | NICHE Steering Committee                                                                                                                                                                                           | Unit Manager/NICHE Coordinator                                                                                                                                                                                                                                         |
-|---------------------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **30 days**             | Communicate | 1) Communicate survey results to managers, committee, staff <br><br>2) Identify and agree on next steps in action planning process <br><br>3) Set expectations, accountability and timeline to address   improvement opportunities | 1) Thank team for participating in the  GIAP. Present awards or special  recognition as appropriate. <br><br>2) Create awareness about the NICHE action plan <br><br>3) Set expectations, accountability, timeline                                                                     |
-| **30 - 60 days**        | Develop     | 1) Meet as a senior team to review results and develop a global  action plan <br><br>2) Focus on identifying strengths and key drivers to achieve  objectives for care of older adults                                     | 1) Review the GIAP results <br><br>2) Meet with the nursing staff to review the  results <br><br>3) Select key priorities for improvement <br><br>4) Develop action plans <br><br>5) Share action plan with managers, NICHE   steering committee, unit practice committees  and other key stakeholders |
-| **60 - 90 days**        | Implement   | 1) Establish improvement goals, leaders and timeline <br><br>2) Track and monitor progress  <br><br>3) Communicate updates regularly                                                                                               | 1) Establish ownership and timeline for each   action item <br><br>2) Design and Implement unit-level   Plan-Do-Study-Act (PDSA) cycles <br><br>3) Track and monitor progress <br><br>4) Communicate updates regularly to staff                                                                |
-| **90 days - 12 months** | Measure     | 1) Track results <br><br>2) Refine action plan as needed <br><br>3) Add new improvement goals as practice improvements are   institutionalized into unit policies, procedures and workflows                                        | 1) Communicate updates <br><br>2) Participate in planning process to select and   implement the new set of improvement goals  drawing from QI data and the NICHE Protocols                                                                                                     |
-```{r eval=FALSE}
-print("Do not edit table!")
-```
 
 
 ---------------------------------
