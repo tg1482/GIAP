@@ -1,0 +1,219 @@
+---
+title: "STA Data Run"
+author: "Tanmay Gupta"
+date: "February 26, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+
+```{r setup2}
+pacman::p_load(tidyverse, readr, condformat)
+
+na_to_zero <- function(val){
+  zero <- ifelse(is.na(val), 0, val)
+  return(zero)
+}
+
+data <- read_csv("C:/Users/tg1482/Desktop/NICHE/Research/Projects 2020/STA Data Run/Alldata.csv")
+head(data)
+```
+
+### In what position do you spend most of your time?
+
+```{r}
+data.plt <- data %>% 
+  select(q1_1) %>%
+  group_by(q1_1) %>%
+  summarize(n = n()) %>% 
+  {.[order(-.$n),]} %>% 
+  mutate(Role = case_when(q1_1=='1'~'Nursing Assistant/Aide',
+            q1_1=='2'~'Staff Nurse (LPN/LVN or RN)',
+            q1_1=='3'~'Unit Nurse Manager',
+            q1_1=='4'~'Clinical Specialist/Nurse Practitioner',
+            q1_1=='5'~'Staff/Nurse Educator',
+            q1_1=='6'~'Administrator',
+            q1_1=='7'~'Physician',
+            q1_1=='8'~'Physician Assistant',
+            q1_1=='9'~'Medical Director',
+            q1_1=='10'~'Pharmacist',
+            q1_1=='11'~'Social Worker',
+            q1_1=='12'~'Occupational Therapist',
+            q1_1=='13'~'Physical Therapist',
+            q1_1=='14'~'Respiratory Therapist',
+            q1_1=='15'~'Recreation Therapist',
+            q1_1=='16'~'Dietitian',
+            q1_1=='17'~'Minimum Data Set (MDS) Coordinator',
+            q1_1=='18'~'Transport Team Member',
+            q1_1=='19'~'Spiritual Care Provider/Clergy',
+            q1_1=='20'~'Volunteer',
+            q1_1=='21'~'Other',
+            q1_1=='99'~'Refused/Not Answered)'))
+
+level_order <- data.plt$Role
+
+data.plt %>% 
+  ggplot(aes(x = factor(Role, rev(level_order)), y = n)) +
+  geom_bar(stat = "identity", width = .8) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank()
+#    panel.grid.minor = element_blank()
+  ) +
+  labs(x = "Role", y = "Respondents") +
+  coord_flip()
+  
+```
+
+### How many years of experience do you have in your current profession?
+
+```{r}
+data.plt <- data %>% 
+  select(q1_4) %>%
+  group_by(q1_4) %>%
+  summarize(n = n()) %>% 
+  mutate(Exp = case_when(q1_4=='1'~'0 - 2 years',
+                          q1_4=='2'~'3 - 5 years',
+                          q1_4=='3'~'6 - 10 years',
+                          q1_4=='4'~'11 - 15 years',
+                          q1_4=='5'~'16 - 20 years',
+                          q1_4=='6'~'20 - 25 years',
+                          q1_4=='7'~'26 or more years',
+                          q1_4=='9'~'Refused/Not Answered'))
+
+level_order <- data.plt$Exp
+
+data.plt %>% 
+  ggplot(aes(x = factor(Exp, rev(level_order)), y = n)) +
+  geom_bar(stat = "identity", width = .8) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank()
+#    panel.grid.minor = element_blank()
+  ) +
+  labs(x = "Experience", y = "Respondents") + 
+  coord_flip()
+```
+
+### How many years have you been working at this facility?
+
+```{r}
+data.plt <- data %>% 
+  select(q1_5) %>%
+  group_by(q1_5) %>%
+  summarize(n = n()) %>% 
+  mutate(Exp = case_when(q1_5=='1'~'0 - 2 years',
+                          q1_5=='2'~'3 - 5 years',
+                          q1_5=='3'~'6 - 10 years',
+                          q1_5=='4'~'11 - 15 years',
+                          q1_5=='5'~'16 - 20 years',
+                          q1_5=='6'~'20 - 25 years',
+                          q1_5=='7'~'26 or more years',
+                          q1_5=='9'~'Refused/Not Answered'))
+
+level_order <- data.plt$Exp
+
+data.plt %>% 
+  ggplot(aes(x = factor(Exp, rev(level_order)), y = n)) +
+  geom_bar(stat = "identity", width = .8) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank()
+#    panel.grid.minor = element_blank()
+  ) +
+  labs(x = "Experience", y = "Respondents") + 
+  coord_flip()
+```
+
+```{r}
+distribution_agree_scale <- function(column_name, y_axis_name){
+  data.plt <- data %>%
+  select(column_name) %>%
+  group_by_(column_name) %>%
+  summarize(n = n()) %>% 
+  mutate(y_axis_name = case_when(get(column_name)=='1'~'Strongly Disagree',
+                          get(column_name)=='2'~'Disagree',
+                          get(column_name)=='3'~'Neither Agree Nor Disagree',
+                          get(column_name)=='4'~'Agree',
+                          get(column_name)=='5'~'Strongly Agree',
+                          get(column_name)=='9'~'Refused/Not Answered',
+                          is.na(get(column_name)) ~ 'Refused/Not Answered'))
+
+level_order <- data.plt$y_axis_name
+
+data.plt %>% 
+  ggplot(aes(x = factor(y_axis_name, rev(level_order)), y = n)) +
+  geom_bar(stat = "identity", width = .8) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank()
+#    panel.grid.minor = element_blank()
+  ) +
+  labs(x = y_axis_name, y = "Respondents") + 
+  coord_flip()
+}
+```
+
+### Q2_1a: The time required to manage common problems experienced by older adults is factored into staff assignments
+
+```{r}
+distribution_agree_scale("q2_1a", "Q2_1a")
+```
+
+### Q2_1b: Training is readily available to staff members who want to learn more about the care of older adults
+
+```{r}
+distribution_agree_scale("q2_1b", "Q2_1b")
+```
+
+### Q2_1c: Staff members are provided with time away from their regular work
+
+```{r}
+distribution_agree_scale("q2_1c", "Q2_1c")
+```
+
+### Q2_1c: The nurse administrators take an active interest in improving care for older adults. 
+
+```{r}
+distribution_agree_scale("q2_1d", "Q2_1d")
+```
+
+```{r}
+data.plt <- data %>%
+  select(q2_1a, q2_1b, q2_1c, q2_1d, q2_1e, q2_1f, q2_1g, q2_1h, q2_1i, q2_1j, q2_1k) %>%
+  gather(key = "Question", value = "Responses") %>% 
+  group_by(Question, Responses) %>%
+  summarize(n = n()) %>%
+  mutate(Responses = case_when(Responses=='1'~'Strongly Disagree',
+                          Responses=='2'~'Disagree',
+                          Responses=='3'~'Neither Agree Nor Disagree',
+                          Responses=='4'~'Agree',
+                          Responses=='5'~'Strongly Agree',
+                          Responses=='9'~'Refused/Not Answered',
+                          is.na(Responses) ~ 'Refused/Not Answered')) %>% 
+  spread(Responses, n) %>% 
+  select(Question, "Strongly Disagree", "Disagree", 'Neither Agree Nor Disagree', 'Agree', 'Strongly Agree', 'Refused/Not Answered') %>% 
+  mutate_if(is.numeric, na_to_zero)
+  
+row_names <- data.plt$Question
+
+data_table <- data.plt %>%
+  ungroup() %>% 
+  select(-Question) %>% 
+  as.matrix() %>% 
+  as.table() %>% 
+  prop.table(margin=1)
+
+rownames(data_table) <- row_names
+
+data.plt <- as.data.frame.matrix(round(data_table, 2))
+
+data.plt %>% 
+  condformat() %>% 
+  rule_fill_gradient2(`Strongly Agree`)
+```
+

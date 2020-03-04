@@ -76,7 +76,7 @@ htmltools::includeHTML("table_html_code.txt")
 
 **GIAP Overview**
 
-The Geriatric Institutional Assessment Profile (GIAP) is a baseline assessment of nurses' knowledge, skills, attitudes and perceptions regarding care for older adults. The information generated from the GIAP is used to identify strengths and prioritize opportunities to improve nursing practice to support clinical excellence in the care of older adults.    
+The Geriatric Institutional Assessment Profile (GIAP) is ab aseline assessment of nurses' knowledge, skills, attitudes and perceptions regarding care for older adults. The information generated from the GIAP is used to identify strengths and prioritize opportunities to improve nursing practice to support clinical excellence in the care of older adults.    
 
 The GIAP (v.8) provides clinical leaders with information about nurses' perceptions regarding:    
 
