@@ -492,7 +492,7 @@ giap %>%
   arrange(Q36) %>% 
   select(-Q36), by = "Work") %>% 
   mutate_if(is.numeric, na_to_zero) %>%
-  setNames(c("Work Schedule", "Cohort (%)", "Hospital (%)")) %>%    
+  setNames(c("Work Schedule", "Cohort (%)", "Hospital (%)")) %>%
   as.data.frame() %>% 
   kable(format = "html", table.attr = "style='width:90%;'") %>% 
   kable_styling() %>% 
