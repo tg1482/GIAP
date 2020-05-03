@@ -10,11 +10,10 @@ nocite: |
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 6, fig.asp = 0.618,
-out.width = "60%", fig.align = "center", fig.show='hold')
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fig.width = 6, fig.asp = 0.618, out.width = "60%", fig.align = "center", fig.show='hold')
 ```
 
-```{css, echo=FALSE}
+```{css margin_init, echo=FALSE}
     body .main-container {
       width: 80% !important;  
       margin-left: 10% !important;
@@ -34,6 +33,7 @@ hospital_n <- nrow(giap %>% filter(Hospital.Name==name))
 id <- unique(giap$Hospital.ID[giap$Hospital.Name==name] %>% na.omit())
 wrap_15 <- wrap_format(15)
 wrap_20 <- wrap_format(20)
+wrap_30 <- wrap_format(30)
 ```
 
 ```{r, fig.align = "left", out.width='15%'}
@@ -112,11 +112,11 @@ htmltools::includeHTML("recommendations_table_code.txt")
 
 ### **Step 4: Review GIAP Results**
 
-A total of `r nrow(giap %>% filter(Hospital.Name==name))` nurses at `r name` provided compete data for the questions included in this report. Of the eligible staff invited to participate in the GIAP, `r round(nrow(giap)/eligible_nurses*100,2)`% completed the survey.  As you review the your hospitals’ results, keep in mind that a mean score of 80% on each of the GIAP sections demonstrates nurses’ mastery of geriatric nursing concepts and reflects a unit environment that supports age-friendly care.
+A total of `r hospital_n` nurses at `r name` provided compete data for the questions included in this report. Of the eligible staff invited to participate in the GIAP, `r round(cohort_n/eligible_nurses*100,2)`% completed the survey.  As you review the your hospitals’ results, keep in mind that a mean score of 80% on each of the GIAP sections demonstrates nurses’ mastery of geriatric nursing concepts and reflects a unit environment that supports age-friendly care.
 
 **Participating Staff**
 
-```{r}
+```{r sex_table}
 giap %>%
   filter(!is.na(Q21))%>%
   rename(Gender = Q21) %>%
@@ -149,94 +149,35 @@ giap %>%
 ```
 
 
-```{r}
-giap %>%
-  filter(!is.na(Q22), Q22 ==1) %>%
-  mutate(Q22 = case_when(Q22 == 1 ~ "Hispanic or Latino/Latina")) %>% 
-  rename(Ethnicity = Q22) %>% 
-  count(Ethnicity)%>% 
-  rbind({giap %>%
-      filter(!is.na(Q23_1), Q23_1 ==1) %>%
-      mutate(Q23_1 = case_when(Q23_1 == 1 ~ "American Indian or Alaskan Native")) %>% 
-      rename(`Ethnicity` = Q23_1) %>% 
-      count(Ethnicity)}) %>% 
-  rbind({giap %>%
-      filter(!is.na(Q23_2), Q23_2 ==1) %>%
-      mutate(Q23_2 = case_when(Q23_2 == 1 ~ "Asian")) %>% 
-      rename(`Ethnicity` = Q23_2) %>%
-      count(`Ethnicity`)}) %>% 
-  rbind({giap %>%
-      filter(!is.na(Q23_3), Q23_3 ==1) %>%
-      mutate(Q23_3 = case_when(Q23_3 == 1 ~ "Black or African American")) %>% 
-      rename(`Ethnicity` = Q23_3) %>%
-      count(`Ethnicity`)}) %>% 
-  rbind({giap %>%
-      filter(!is.na(Q23_4), Q23_4==1) %>%
-      mutate(Q23_4 = case_when(Q23_4 == 1 ~ "Native Hawaiian or Pacific Islander")) %>% 
-      rename(`Ethnicity` = Q23_4) %>%
-      count(`Ethnicity`)}) %>% 
-  rbind({giap %>%
-      filter(!is.na(Q23_5), Q23_5==1) %>%
-      mutate(Q23_5 = case_when(Q23_5 == 1 ~ "White")) %>% 
-      rename(`Ethnicity` = Q23_5) %>%
-      count(`Ethnicity`)}) %>% 
-  rbind({giap %>%
-      filter(!is.na(Q23_6), Q23_6==1) %>%
-      mutate(Q23_6 = case_when(Q23_6 == 1 ~ "Other")) %>% 
-      rename(`Ethnicity` = Q23_6) %>%
-      count(`Ethnicity`)}) %>% 
-  {.[order(.$n, decreasing = T),]} %>% 
-  rbind(c("Ethnicity" = "Prefer Not to Report", 
-          "n" = nrow(giap %>% 
-                       filter((Q23_1==9&Q23_2==9&Q23_3==9&Q23_4==9&Q23_5==9&Q23_6==9) |
-                                (Q23_1==0&Q23_2==0&Q23_3==0&Q23_4==0&Q23_5==0&Q23_6==0))))) %>% 
-  mutate(n = as.numeric(n),
-         n = round(n / sum(n) * 100, 1)) %>% 
-  rename(Count = n) %>% 
-  full_join(giap %>%
-  filter(Hospital.Name ==name,!is.na(Q22), Q22 ==1) %>%
-  mutate(Q22 = case_when(Q22 == 1 ~ "Hispanic or Latino/Latina")) %>% 
-  rename(Ethnicity = Q22) %>% 
-  count(Ethnicity)%>% 
-  rbind({giap %>%
-      filter(Hospital.Name ==name,!is.na(Q23_1), Q23_1 ==1) %>%
-      mutate(Q23_1 = case_when(Q23_1 == 1 ~ "American Indian or Alaskan Native")) %>% 
-      rename(`Ethnicity` = Q23_1) %>% 
-      count(Ethnicity)}) %>% 
-  rbind({giap %>%
-      filter(Hospital.Name ==name,!is.na(Q23_2), Q23_2 ==1) %>%
-      mutate(Q23_2 = case_when(Q23_2 == 1 ~ "Asian")) %>% 
-      rename(`Ethnicity` = Q23_2) %>%
-      count(`Ethnicity`)}) %>% 
-  rbind({giap %>%
-      filter(Hospital.Name ==name,!is.na(Q23_3), Q23_3 ==1) %>%
-      mutate(Q23_3 = case_when(Q23_3 == 1 ~ "Black or African American")) %>% 
-      rename(`Ethnicity` = Q23_3) %>%
-      count(`Ethnicity`)}) %>% 
-  rbind({giap %>%
-      filter(Hospital.Name ==name,!is.na(Q23_4), Q23_4==1) %>%
-      mutate(Q23_4 = case_when(Q23_4 == 1 ~ "Native Hawaiian or Pacific Islander")) %>% 
-      rename(`Ethnicity` = Q23_4) %>%
-      count(`Ethnicity`)}) %>% 
-  rbind({giap %>%
-      filter(Hospital.Name ==name,!is.na(Q23_5), Q23_5==1) %>%
-      mutate(Q23_5 = case_when(Q23_5 == 1 ~ "White")) %>% 
-      rename(`Ethnicity` = Q23_5) %>%
-      count(`Ethnicity`)}) %>% 
-  rbind({giap %>%
-      filter(Hospital.Name ==name,!is.na(Q23_6), Q23_6==1) %>%
-      mutate(Q23_6 = case_when(Q23_6 == 1 ~ "Other")) %>% 
-      rename(`Ethnicity` = Q23_6) %>%
-      count(`Ethnicity`)}) %>% 
-  {.[order(.$n, decreasing = T),]} %>% 
-  rbind(c("Ethnicity" = "Prefer Not to Report", 
-          "n" = nrow(giap %>% filter(Hospital.Name==name & 
-                   ((Q23_1==9 & Q23_2==9& Q23_3==9& Q23_4==9& Q23_5==9 & Q23_6==9) | 
-                      (Q23_1==0 & Q23_2==0& Q23_3==0& Q23_4==0& Q23_5==0 & Q23_6==0)))))) %>% 
-  mutate(n = as.numeric(n),
-         n = round(n / sum(n) * 100, 1)) %>% 
-  rename(Count = n), by = "Ethnicity") %>% 
+```{r ethnicity_table}
+ethnicity_c <- giap %>%
+  select(Q22, Q23_1, Q23_2, Q23_3, Q23_4, Q23_5, Q23_6) %>% 
+  mutate_at(vars("Q22", "Q23_1", "Q23_2", "Q23_3", "Q23_4", "Q23_5", "Q23_6"), na_to_zero) %>%
+  mutate_at(vars("Q22", "Q23_1", "Q23_2", "Q23_3", "Q23_4", "Q23_5", "Q23_6"), two_to_zero)
+
+ethnicity_h <- giap %>%
+  filter(Hospital.Name == name) %>% 
+  select(Q22, Q23_1, Q23_2, Q23_3, Q23_4, Q23_5, Q23_6) %>% 
+  mutate_at(vars("Q22", "Q23_1", "Q23_2", "Q23_3", "Q23_4", "Q23_5", "Q23_6"), na_to_zero) %>%
+  mutate_at(vars("Q22", "Q23_1", "Q23_2", "Q23_3", "Q23_4", "Q23_5", "Q23_6"), two_to_zero)
+  
+
+ethnicity_c <- apply(ethnicity_c, 2, sum)
+ethnicity_c<-ethnicity_c/sum(ethnicity_c)
+ethnicity_h <- apply(ethnicity_h, 2, sum)
+ethnicity_h <- ethnicity_h/sum(ethnicity_h)
+data.frame(
+  Ethnicity= c("Hispanic or Latino/Latina", "Other", "Asian", "Black or African American", "Other", "White", "Other"),
+  Cohort = ethnicity_c,
+  Hospital = ethnicity_h
+) %>% 
+  group_by(Ethnicity) %>% 
+  summarize(Cohort_p = sum(Cohort), Hospital_p = sum(Hospital)) %>% 
+  ungroup() %>% 
+  {.[order(.$Cohort_p, decreasing = T),]} %>% 
   mutate_if(is.numeric, na_to_zero) %>% 
+  mutate(Cohort_p = round(Cohort_p* 100, 1),
+         Hospital_p = round(Hospital_p* 100, 1)) %>% 
   setNames(c("Ethnicity", "Cohort (%)", "Hospital (%)")) %>% 
   kable(format = "html", table.attr = "style='width:90%;'") %>% 
   kable_styling() %>% 
@@ -245,7 +186,7 @@ giap %>%
   column_spec(3, width = "10em")
 ```
 
-```{r}
+```{r experience_table}
 giap %>% 
   select(Q2) %>% 
   mutate(Cat = case_when(Q2 <= 1 ~ 1,
@@ -310,7 +251,7 @@ giap %>%
 ```
 
 
-```{r}
+```{r degree_table}
 giap %>% 
   select(Q30) %>% 
   mutate(Q30 = ifelse(is.na(Q30), 9, Q30),
@@ -353,7 +294,7 @@ giap %>%
 ```
 
 
-```{r}
+```{r shift_table}
 giap %>% 
   select(Q35) %>% 
   mutate(Q35 = ifelse(is.na(Q35), 9, Q35),
@@ -396,7 +337,7 @@ giap %>%
 ```
 
 
-```{r}
+```{r schedule_table}
 giap %>% 
   select(Q36) %>% 
   mutate(Q36 = ifelse(is.na(Q36), 9, Q36),
@@ -440,7 +381,7 @@ giap %>%
 
 This diagram illustrates nurses' job satisfaction.
 
-```{r, fig.width=7, fig.height= 5 , out.width = "75%"}
+```{r job_satisfaction, fig.width=7, fig.height= 5 , out.width = "75%"}
 question <- "I am satisfied with my current job"
 # Cohort
 cohort_data <- giap %>%
@@ -461,7 +402,7 @@ df <- df %>% mutate(group = ifelse(percentage <0.5, "red",
                     label = paste0(percentage*100, "%"),
                     title = wrap_35(variable))
 ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
-  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb", color = 'black') +
+  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb", color = 'grey') +
   geom_rect() + 
   coord_polar(theta = "y",start=-pi/2) + xlim(c(0, 2)) + ylim(c(0,2)) +
   geom_text(aes(x = 0, y = 0, label = label, colour=group), size=6.5) +
@@ -480,7 +421,7 @@ ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
 
 This diagram depicts the extent to which staff nurses find working with older adults to be rewarding
 
-```{r, fig.width=7, fig.height= 5 , out.width = "75%"}
+```{r working_with_older_adults_data, fig.width=7, fig.height= 5 , out.width = "75%"}
 question <- "How rewarding is your work with older adults"
 
 # Cohort
@@ -507,7 +448,7 @@ data <- data %>% mutate(group = ifelse(percentage <0.5, "red",
                     title = wrap_35(variable))
 
 ggplot(data, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
-  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb", color = 'black') +
+  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb", color = 'grey') +
   geom_rect() + 
   coord_polar(theta = "y",start=-pi/2) + 
   xlim(c(0, 2)) + 
@@ -585,7 +526,7 @@ ggplot(data) +
 This figure illustrates nurses’ knowledge of care of older adults. Participating registered nurses were asked to select the most appropriate nursing action for twenty clinical scenarios. The number of questions for each clinical topic ranged between one and three questions. The answers for each question on the same clinical topic (eg: medication safety) were averaged to create a mean score.  
 
 
-```{r}
+```{r knowledge_dataframe_init}
 knowledge <- giap %>%
   select(Hospital.Name, CASEID, Q42b, Q43c, Q44c, Q45b, Q46b, Q51b, Q47a, Q48d, Q49c, 
          Q50b, Q58c, Q59b, Q52a, Q56b, Q53b, Q55c, Q54c, Q57b, Q60c, Q61b) %>% 
@@ -627,7 +568,7 @@ knowledge <- giap %>%
 NICHE_colors <- c("#57068C","#6199AE","#FFC842","#314383","#6BAB8A","#F09C5D")
 ```
 
-```{r knowledge}
+```{r knowledge_dataframe_data}
 #######################
 # Falls
 #######################
@@ -1131,84 +1072,119 @@ mean_list_h <- mean_list_h %>%
 
 mean_list_all <- mean_list_all %>% 
   mutate(Mean = as.numeric(as.character(Mean)))
-```
 
-```{r}
-all <- mean_list_all
-
-all <- cbind(all, h) %>% 
+all <- cbind(mean_list_all, mean_list_h) %>% 
   setNames(c("Mean_C", "Question", "Mean_H", "Question_2")) %>% 
   select(Question, Mean_C, Mean_H)
 ```
 
-<center>
-**Cohort Knowledge**
-</center>
 
-```{r, fig.width = 8, fig.asp = 0.4, out.width='80%'}
+```{r knowledge_cohort_hospital, fig.width = 8, fig.asp = 0.4, out.width='80%'}
 all %>% 
   ggplot() +
   geom_segment(aes(x=Question ,xend=Question, y=0, yend = Mean_H), color="grey") +
   geom_point(aes(x=Question, y=Mean_C,color="#69b3a2"), size=5) +
   geom_point(aes(x=Question, y=Mean_H,color="#add8e6"), size=5) +
-  scale_y_continuous(labels = percent_format()) +
+  scale_y_continuous(labels = percent_format(), limits = c(0,1)) +
   scale_color_manual(values = c("#69b3a2", "#add8e6"),
                        labels = c("Cohort", wrap_20(name))) +
   theme(
     panel.grid.minor.y = element_blank(),
     panel.grid.major.y = element_blank(),
-    axis.text = element_text( size=12 )
+    axis.text = element_text(size=12)
   ) +
   theme_minimal() +
-  ylim(0,1) +
   labs(x = "", y = "", colour = "Legend")+
   coord_flip()
 ```
 
 
-```{r}
-mean_list_all %>% 
-  ggplot( aes(x=Question, y=Mean)) +
-  geom_segment( aes(x=Question ,xend=Question, y=0, yend=Mean), color="grey") +
-  geom_point(size=5, color="#69b3a2") +
+**Nurses’ Views on Educational Efforts to Promote Age-Friendly Care**
+
+This graph illustrates nurses’ views on organizational efforts to educate nurses and other staff on the care of older adults.
+
+```{r educational_efforts_dataframe, fig.asp = .2, fig.width = 14, out.width = "85%"}
+educational_efforts_dataframe <- giap %>%
+  select(Hospital.Name, CASEID, Q17) %>%
+  gather(Item, Response, -Hospital.Name, -CASEID) %>% 
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Poor",
+                              Response == 2 ~ "Fair",
+                              Response == 3 ~ "Good",
+                              Response == 4 ~ "Very Good",
+                              Response == 5 ~ "Excellent"),
+         Response = ordered(Response, levels = rev(names(cols))),
+         Item = case_when(Item == "Q17" ~ "Job your institution has done educating staff about the care of the older adult")) %>% 
+  count(Item, Response) %>%
+  mutate(Item = wrap_30(Item),
+         Label =  ifelse(n/sum(n)<0.074, NA, paste0(as.character(round(n/sum(n)*100, 1)), "%")))
+
+educational_efforts_dataframe %>% 
+  ggplot(aes(x = Item, y = n/sum(n), fill = Response, label = Label)) +
+  geom_bar(stat = "identity", width = .5, color = "white") +
+  scale_y_continuous(labels = percent_format(),
+                     breaks = cumsum(rev(eduactional_efforts_dataframe$n))/sum(eduactional_efforts_dataframe$n)) +
+  geom_text(position = position_stack(vjust = 0.5), 
+            color = c("white", "white", "black", "black", "black"),
+            size = 5) +
+  scale_fill_manual(values = cols) +
+  labs(y = "", x = "", fill = "") +
   coord_flip() +
-  theme(
-    panel.grid.minor.y = element_blank(),
-    panel.grid.major.y = element_blank(),
-    axis.text = element_text( size=12 ),
-    legend.position="none"
-  ) +
   theme_minimal() +
-  ylim(0,1) +
-  ylab("") +
-  xlab("")
+  theme(legend.position = "right", 
+        text = element_text(size = 20, color = "black"), 
+        panel.border = element_blank(),
+        axis.text.x = element_text(color="#993333", 
+                           size=14, angle=45))
+ 
 ```
 
+The number represents the percentage of the survey takers who believe that their institution has done a *Very Good* or *Excellent* job.
 
 <center>
-  **`r name` Knowledge**
+**Cohort Results**
 </center>
-  
-```{r}
-mean_list_h %>% 
-  ggplot( aes(x=Question, y=Mean)) +
-  geom_segment( aes(x=Question ,xend=Question, y=0, yend=Mean), color="grey") +
-  geom_point(size=5, color="#69b3a2") +
-  coord_flip() +
-  theme(
-    panel.grid.minor.y = element_blank(),
-    panel.grid.major.y = element_blank(),
-    axis.text = element_text( size=12 ),
-    legend.position="none"
-  ) +
-  theme_minimal() +
-  ylim(0,1) +
-  ylab("") +
-  xlab("")
+
+```{r education_efforts_cohort, fig.width=7, fig.height= 5 , out.width = "75%"}
+question <- "Job your institution has done educating staff about the care of the older adult"
+# Cohort
+cohort_data <- giap %>%
+  filter(!is.na(Q17), Q17 != 9) %>%
+  rename(`Response` = Q17) %>%
+  {sum(.$Response==4 | .$Response == 5)/cohort_n}
+
+# Hospital
+hospital_data <- giap %>%
+  filter(!is.na(Q17), Q17 != 9, Hospital.Name==name) %>%
+  rename(`Response` = Q17) %>%
+  {sum(.$Response==4 | .$Response == 5)/hospital_n}
+
+df <- data.frame(matrix(nrow=2, ncol = 2))
+names(df) <- c("variable", "percentage")
+df$variable <- c("Cohort", name)
+df$percentage <- round(c(cohort_data, hospital_data),2)
+df <- df %>% mutate(group = ifelse(percentage <0.5, "red",
+                                 ifelse(percentage>=0.5 & percentage<0.75, "yellow","green")),
+                    label = paste0(percentage*100, "%"),
+                    title = wrap_35(variable))
+ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
+  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb") +
+  geom_rect() + 
+  coord_polar(theta = "y",start=-pi/2) + xlim(c(0, 2)) + ylim(c(0,2)) +
+  geom_text(aes(x = 0, y = 0, label = label, colour=group), size=6.5) +
+  geom_text(aes(x=1.5, y=1.5, label=title), size=4.2) + 
+  facet_wrap(~title, ncol = 2) +
+  theme_void() +
+  scale_fill_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  scale_colour_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  theme(strip.background = element_blank(),
+        strip.text.x = element_blank()) +
+  guides(fill=FALSE) +
+  guides(colour=FALSE)
 ```
 
 
 
-
-
-
+---------------------------------
+  
+  
