@@ -1,16 +1,15 @@
 ######################
 # Tanmay Gupta
-# Data Analyst - Oct 16, 2019
+# Data Analyst - Apr 16, 2020
 # tg1482@nyu.edu
 ######################
 # Loading Packages
-pacman::p_load(tidyverse, ggplot2, pander, knitr, scales, readxl, kableExtra, rmarkdown, knitcitations, 
-       imputeTS, lubridate, haven, psych)
+pacman::p_load(ggplot2, knitr, scales, kableExtra, rmarkdown, knitcitations, dplyr, tidyr)
 ######################
 
 ######################
 # Loading Survey Data and Correct Knowledge Questions
-giap <- read_sav("Summer 2019/Summer 2019 Data.sav")
+giap <- read_sav("../Fall 2019/Fall 2019 Data.sav")
 ######################
 
 ######################
@@ -65,11 +64,11 @@ eligible_nurses <- 1903
 responded_nurses <- nrow(giap)
 
 
-#for(name in hospital.names){
-#  render("Summer 2019/GIAP Individual Report.Rmd", 
-#         output_file = paste0("Summer 2019/results/", name, ".html"))
-#}
+for(name in hospital.names){
+  render("Fall 2019/GIAP Individual Report.Rmd", 
+         output_file = paste0("Fall 2019/results/", name, ".html"))
+}
 ######################
 
-render("GIAP Individual Report.Rmd", 
-       output_file = paste0("results/", name, ".html"))
+# render("Fall 2019/GIAP Individual Report.Rmd", 
+#        output_file = paste0("Fall 2019/results/", name, ".html"))

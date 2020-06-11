@@ -4,9 +4,6 @@ output:
   html_document:
     theme: cosmo
 always_allow_html: yes
-bibliography: bibliography.bib
-nocite: | 
-  @author1, @author2
 ---
 
 ```{r setup, include=FALSE}
@@ -26,14 +23,55 @@ knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, comment=NA, fi
     }
 ```
 
+```{r item_graph_function}
+# create graphing function
+item.graph <- function(df, na.rm = TRUE, ...){
+  
+  # create list of counties in data to loop over 
+  item_list <- unique(df$Item)
+  
+  # create for loop to produce ggplot2 graphs 
+  for(i in seq_along(item_list))
+    { 
+    # create plot for each county in df 
+    plot <- ggplot(subset(df, df$Item==item_list[i])) +
+      facet_wrap(~Level, ncol = 2, strip.position = "bottom") +
+      geom_bar(aes(x = factor(1), y = Percent, fill = Response, label = Percent), 
+               position = "fill", stat = "identity", width = .6, color = "white") +
+      coord_polar(theta = "y", 
+                  start = -pi/2) +
+      geom_text(aes(x = 0, y = 0, label = label, color = Response), size = 6.5) +
+      # geom_text(aes(x = 0, y = 0, label = label_2), 
+      #           size=5.5, 
+      #           vjust = 1.5) +
+      # geom_text(aes(x=0, y=0, label = Item),
+      #          size=2.2,
+      #          vjust = 5.5) +
+      theme_void() +
+      scale_fill_manual(values = cols) +
+      scale_colour_manual(values = cols) +
+      theme(strip.background = element_blank(),
+            strip.text.x = element_text(face = "bold")
+            ) +
+      guides(colour=FALSE) +
+      ggtitle(item_list[i])
+  
+  print(plot)
+  }
+}
+```
+
 ```{r initialize}
 hospital_names <- unique(giap$`Hospital.Name`)[!is.na(unique(giap$`Hospital.Name`))]
 cohort_n <- nrow(giap)
 hospital_n <- nrow(giap %>% filter(Hospital.Name==name))
 id <- unique(giap$Hospital.ID[giap$Hospital.Name==name] %>% na.omit())
+
 wrap_15 <- wrap_format(15)
 wrap_20 <- wrap_format(20)
 wrap_30 <- wrap_format(30)
+wrap_35 <- wrap_format(35)
+wrap_60 <- wrap_format(60)
 ```
 
 ```{r, fig.align = "left", out.width='15%'}
@@ -60,19 +98,21 @@ NICHE is an evidence-based geriatric care model that focuses on developing nurse
 * Patient-centered care 
 * Evidence-based care at the bedside
 * Healthy work environments 
-* Etc…
+* Client and Family Engagement
 
 **NICHE Practice Model**
 
-<add image>
+```{r practice_model, fig.align = "center", out.width='50%'}
+knitr::include_graphics("NICHE Practice Model.png")
+```
 
-The NICHE Practice Model and the GIAP data
+**The NICHE Practice Model and the GIAP data**
 
 The GIAP data offers insights into nurses' knowledge and attitudes about older adults and their perceptions of the practice environment to provide quality care that meets the unique needs of older adults. This diagram illustrates how to use the GIAP results to support the development of the NICHE program on the participating nursing units.
 
-**NICHE Practice Model**
-
-<add image>
+```{r giap_model, fig.align = "center", out.width='70%'}
+knitr::include_graphics("GIAP Practice Model.png")
+```
 
 ### **Step 2:  Action Plan Model**
 
@@ -80,7 +120,9 @@ We outline some general practices for how to use the GIAP survey results to enha
 
 **Action Plan Steps**
 
-<add image>
+```{r action_plan, fig.align = "center", out.width='50%'}
+knitr::include_graphics("NICHE Action Plan.png")
+```
 
 **Recommended Action Plan Timeline to Integrate GIAP Results into NICHE Program Implementation Efforts**
 
@@ -89,6 +131,38 @@ We recommend the following action plan to establish NICHE at your hospital
 ```{r action_plan_table}
 htmltools::includeHTML("action_plan_table_code.txt")
 ```
+
+```{r table_1}
+# text_tbl <- data.frame(
+#   Timing = c("30 days", "30 - 60 days", "60 - 90 days", "90 days - 12 months"),
+#   
+#   Step = c("Communicate", "Develop", "Implement", "Measure"),
+#   
+#   "NICHE Steering Committee" = c(
+#     "Communicate survey results to managers, committee, staff<br><br> Identify and agree on next steps in action planning process<br><br> Set expectations, accountability and timeline to address improvement opportunities",
+#     "Meet as a senior team to review results and develop a global action plan<br><br> Focus on identifying strengths and key drivers to achieve objectives for care of older adults", 
+#     "Establish improvement goals, leaders and timeline<br><br> Track and monitor progress<br><br>3) Communicate updates regularly",
+#     "Track results<br><br> Refine action plan as needed<br><br> Add new improvement goals as practice improvements are institutionalized into unit policies, procedures and workflows"
+#   ),
+#   
+#   `Unit Manager/NICHE Coordinator` = c(
+#     "Thank team for participating in the GIAP. Present awards or special recognition as appropriate<br><br> Create awareness about the NICHE action plan<br><br> Set expectations, accountability, timeline",
+#     "Review the GIAP results<br><br> Meet with the nursing staff to review the results<br><br> Select key priorities for improvement<br><br> Develop action plans<br><br> Share action plan with managers, NICHE steering committee, unit practice committees and other key stakeholders",
+#     "Establish ownership and timeline for each action item<br><br> Design and Implement unit-level Plan-Do-Study-Act (PDSA) cycles<br><br> Track and monitor progress<br><br> Communicate updates regularly to staff",
+#     "Communicate updates<br><br> Participate in planning process to select and implement the new set of improvement goals drawing from QI data and the NICHE Protocols"
+#     ),
+#   check.names = FALSE
+# )
+# 
+# text_tbl %>% 
+#   kable(format = "html", table.attr = "style='width:90%;'", escape = F) %>% 
+#   kable_styling() %>% 
+#   column_spec(1, width = "10em") %>%
+#   column_spec(2, width = "10em") %>% 
+#   column_spec(3, width = "30em") %>% 
+#   column_spec(4, width = "30em")
+```
+
 
 
 ### **Step 3: General Recommendations for Implementing NICHE**
@@ -107,6 +181,26 @@ htmltools::includeHTML("action_plan_table_code.txt")
 
 ```{r recommendations_table}
 htmltools::includeHTML("recommendations_table_code.txt")
+```
+
+```{r table_2}
+# text_tbl <- data.frame(
+#   "Staff Knowledge and Attitudes" = c("Offer the Introduction to Gerontology module to all staff to promote knowledge about aging<br><br> Schedule staff to complete the GRN and GPCA programs within 60 to 90 days to retain knowledge and apply information to practice<br><br> Compare GIAP results with other quality data to understand practice patterns<br><br> Align staff education plans with quality improvement goals<br><br> Provide clinical coaching and opportunities for staff to apply new knowledge to clinical situations<br><br> Review Knowledge Center reports tracking course completion rates and the mastery of geriatric nursing concepts."),
+#   
+#   "Specialized Resources,Care Planning, and Age-Friendly Environment" = c("Communicate the availability of specialized resources to all staff using multiple methods<br><br> Identify barriers that keep the staff from consistently using specialty resources<br><br> Use the NICHE Protocols, Need to Knows, Pocket Card assessment tools to guide practice including nursing policies and procedures<br><br> Review current policies, procedures, data collection tools focused on the care of older adults. Collect data on older adults segmented into age-groups to focus on quality improvement goals"),
+#   
+#   "Unit Readiness to Become Age-Friendly" = c(
+#   "Schedule a specific time to work on quality improvement projects<br><br> Offer clinical coaching to staff to reinforce practice changes<br><br> Communicate and discuss the value of age-friendly care with all staff members<br><br> Create recognition programs to celebrate nurses’ contributions to quality and the achievement of specific quality goals<br><br> Work with staff to understand potential barriers and creative ideas to improve care for older adults<br><br> Run Plan-Do-Study-Act (PDSA) cycles to adopt evidence-based practices on
+# participating units"),
+# check.names = FALSE
+# )
+# 
+# text_tbl %>% 
+#   kable(format = "html", table.attr = "style='width:90%;'", escape = F) %>% 
+#   kable_styling() %>% 
+#   column_spec(1, width = "30em") %>%
+#   column_spec(2, width = "30em") %>% 
+#   column_spec(3, width = "30em")
 ```
 
 
@@ -383,24 +477,36 @@ This diagram illustrates nurses' job satisfaction.
 
 ```{r job_satisfaction, fig.width=7, fig.height= 5 , out.width = "75%"}
 question <- "I am satisfied with my current job"
+
 # Cohort
 cohort_data <- giap %>%
   filter(!is.na(Q32), Q32 != 9) %>%
   rename(`Response` = Q32) %>%
   {sum(.$Response==1 | .$Response == 2)/cohort_n}
+
 # Hospital
 hospital_data <- giap %>%
   filter(!is.na(Q32), Q32 != 9, Hospital.Name==name) %>%
   rename(`Response` = Q32) %>%
   {sum(.$Response==1 | .$Response == 2)/hospital_n}
+
 df <- data.frame(matrix(nrow=2, ncol = 2))
 names(df) <- c("variable", "percentage")
 df$variable <- c("Cohort", name)
-df$percentage <- round(c(cohort_data, hospital_data),2)
-df <- df %>% mutate(group = ifelse(percentage <0.5, "red",
-                                 ifelse(percentage>=0.5 & percentage<0.75, "yellow","green")),
+df$percentage <- round(c(cohort_data, hospital_data), 3)
+df <- df %>% mutate(group = ifelse(percentage <0.5, "fair",
+                                 ifelse(percentage>=0.5 & percentage<0.75, "good","great")),
                     label = paste0(percentage*100, "%"),
                     title = wrap_35(variable))
+
+summary_stats <- data.frame(
+  Section = "Nurse Job Satisfaction",
+  Performance = round(abs(hospital_data - cohort_data),2),
+  Favorable = ifelse(hospital_data - cohort_data < 0, "Worse", "Better"),
+  Group = NA,
+  stringsAsFactors = F
+)
+
 ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
   geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb", color = 'grey') +
   geom_rect() + 
@@ -409,8 +515,8 @@ ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
   geom_text(aes(x=1.5, y=1.5, label=title), size=4.2) + 
   facet_wrap(~title, ncol = 2) +
   theme_void() +
-  scale_fill_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
-  scale_colour_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  scale_fill_manual(values = c("great"="#1E5E87", "good"="#1E5E87", "fair"="#1E5E87")) +
+  scale_colour_manual(values = c("great"="#1E5E87", "good"="#1E5E87", "fair"="#1E5E87")) +
   theme(strip.background = element_blank(),
         strip.text.x = element_blank()) +
   guides(fill=FALSE) +
@@ -436,18 +542,26 @@ hospital_data <- giap %>%
   rename(`Response` = Q12) %>%
   {sum(.$Response==1 | .$Response == 2)/hospital_n}
 
-data <- data.frame(
+df <- data.frame(
   variable=c("Cohort", name),
   percentage=round(c(cohort_data, hospital_data),2)
 )
 
 
-data <- data %>% mutate(group = ifelse(percentage <0.5, "red",
-                                 ifelse(percentage>=0.5 & percentage<0.75, "yellow","green")),
+df <- df %>% mutate(group = ifelse(percentage <0.5, "fair",
+                                 ifelse(percentage>=0.5 & percentage<0.75, "good","great")),
                     label = paste0(percentage*100, "%"),
                     title = wrap_35(variable))
 
-ggplot(data, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
+summary_data <- c("Nurses Views on Working with Older Adults is Rewarding",
+                  round(abs(cohort_data - hospital_data), 3),
+                  ifelse(hospital_data - cohort_data < 0, "Worse", "Better"),
+                  NA)
+
+summary_stats <- summary_stats %>% 
+  rbind(summary_data, make.row.names = F)
+
+ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
   geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb", color = 'grey') +
   geom_rect() + 
   coord_polar(theta = "y",start=-pi/2) + 
@@ -457,8 +571,8 @@ ggplot(data, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1))
   geom_text(aes(x=1.5, y=1.5, label=title), size=4.2) + 
   facet_wrap(~title, ncol = 2) +
   theme_void() +
-  scale_fill_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
-  scale_colour_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  scale_fill_manual(values = c("great"="#1E5E87", "good"="#1E5E87", "fair"="#1E5E87")) +
+  scale_colour_manual(values = c("great"="#1E5E87", "good"="#1E5E87", "fair"="#1E5E87")) +
   theme(strip.background = element_blank(),
         strip.text.x = element_blank()) +
   guides(fill=FALSE) +
@@ -486,12 +600,12 @@ aging_attitudes_question_correct <- function(row){
   return(score)
 }
 
-cohort_results <- giap %>%
+cohort_data <- giap %>%
   select(Hospital.Name, CASEID, aging_attitudes_questions) %>%
   as.matrix(.) %>% 
   apply(1, aging_attitudes_question_correct)
 
-hospital_results <- giap %>%
+hospital_data <- giap %>%
   filter(Hospital.Name == name) %>% 
   select(Hospital.Name, CASEID, aging_attitudes_questions) %>%
   as.matrix(.) %>% 
@@ -499,16 +613,24 @@ hospital_results <- giap %>%
 
 name_vec <- c("Cohort", name)
 
-data <- data.frame(
-  name= name_vec,
-  value=c(mean(cohort_results), mean(hospital_results)),
-  sd=c(sd(cohort_results), sd(hospital_results))
+df <- data.frame(
+  name = ordered(name_vec, levels = rev(name_vec)),
+  value = c(mean(cohort_data), mean(hospital_data)),
+  sd = c(sd(cohort_data), sd(hospital_data))
 )
 
-data <- data %>% 
-  mutate(name = ordered(name, levels = rev(name_vec)))
+cohort_data <- mean(cohort_data)
+hospital_data <- mean(hospital_data)
 
-ggplot(data) +
+summary_data <- c("Passmore's Aging Quiz",
+                  round(abs(cohort_data - hospital_data), 3),
+                  ifelse(hospital_data - cohort_data < 0, "Worse", "Better"),
+                  "Knowledge")
+
+summary_stats <- summary_stats %>%
+  rbind(summary_data, make.row.names = F)
+
+ggplot(df) +
     geom_bar(aes(x=name, y=value), stat="identity", fill="skyblue", alpha=0.75, width=.4) +
     geom_errorbar(aes(x=name, ymin=value-sd, ymax=value+sd), colour="orange", width = 0.2, alpha=0.9, size=.5) +
   labs(x="", y="") +
@@ -1076,6 +1198,18 @@ mean_list_all <- mean_list_all %>%
 all <- cbind(mean_list_all, mean_list_h) %>% 
   setNames(c("Mean_C", "Question", "Mean_H", "Question_2")) %>% 
   select(Question, Mean_C, Mean_H)
+
+summary_data <- all %>% 
+  mutate(Performance = round(abs(Mean_C - Mean_H), 3),
+         Favorable = ifelse(Mean_C>Mean_H, "Worse", "Better"),
+         Group = "Knowledge") %>% 
+  select(Question, Performance, Favorable, Group) %>% 
+  setNames(c("Section", "Performance", "Favorable", "Group"))
+
+
+summary_stats <- summary_stats %>%
+  rbind(summary_data, make.row.names = F)
+
 ```
 
 
@@ -1101,52 +1235,10 @@ all %>%
 
 **Nurses’ Views on Educational Efforts to Promote Age-Friendly Care**
 
-This graph illustrates nurses’ views on organizational efforts to educate nurses and other staff on the care of older adults.
+This graph illustrates nurses’ views on organizational efforts to educate nurses and other staff on the care of older adults. The number represents the percentage of the survey takers who believe that their institution has done a *Very Good* or *Excellent* job.
 
-```{r educational_efforts_dataframe, fig.asp = .2, fig.width = 14, out.width = "85%"}
-educational_efforts_dataframe <- giap %>%
-  select(Hospital.Name, CASEID, Q17) %>%
-  gather(Item, Response, -Hospital.Name, -CASEID) %>% 
-  filter(!is.na(Response), Response != 9) %>%
-  mutate(Response = case_when(Response == 1 ~ "Poor",
-                              Response == 2 ~ "Fair",
-                              Response == 3 ~ "Good",
-                              Response == 4 ~ "Very Good",
-                              Response == 5 ~ "Excellent"),
-         Response = ordered(Response, levels = rev(names(cols))),
-         Item = case_when(Item == "Q17" ~ "Job your institution has done educating staff about the care of the older adult")) %>% 
-  count(Item, Response) %>%
-  mutate(Item = wrap_30(Item),
-         Label =  ifelse(n/sum(n)<0.074, NA, paste0(as.character(round(n/sum(n)*100, 1)), "%")))
 
-educational_efforts_dataframe %>% 
-  ggplot(aes(x = Item, y = n/sum(n), fill = Response, label = Label)) +
-  geom_bar(stat = "identity", width = .5, color = "white") +
-  scale_y_continuous(labels = percent_format(),
-                     breaks = cumsum(rev(eduactional_efforts_dataframe$n))/sum(eduactional_efforts_dataframe$n)) +
-  geom_text(position = position_stack(vjust = 0.5), 
-            color = c("white", "white", "black", "black", "black"),
-            size = 5) +
-  scale_fill_manual(values = cols) +
-  labs(y = "", x = "", fill = "") +
-  coord_flip() +
-  theme_minimal() +
-  theme(legend.position = "right", 
-        text = element_text(size = 20, color = "black"), 
-        panel.border = element_blank(),
-        axis.text.x = element_text(color="#993333", 
-                           size=14, angle=45))
- 
-```
-
-The number represents the percentage of the survey takers who believe that their institution has done a *Very Good* or *Excellent* job.
-
-<center>
-**Cohort Results**
-</center>
-
-```{r education_efforts_cohort, fig.width=7, fig.height= 5 , out.width = "75%"}
-question <- "Job your institution has done educating staff about the care of the older adult"
+```{r education_efforts_dial, fig.width=7, fig.height= 5 , out.width = "75%"}
 # Cohort
 cohort_data <- giap %>%
   filter(!is.na(Q17), Q17 != 9) %>%
@@ -1163,20 +1255,42 @@ df <- data.frame(matrix(nrow=2, ncol = 2))
 names(df) <- c("variable", "percentage")
 df$variable <- c("Cohort", name)
 df$percentage <- round(c(cohort_data, hospital_data),2)
-df <- df %>% mutate(group = ifelse(percentage <0.5, "red",
-                                 ifelse(percentage>=0.5 & percentage<0.75, "yellow","green")),
-                    label = paste0(percentage*100, "%"),
+df <- df %>% mutate(group = ifelse(percentage < 0.5, "Fair",
+                                 ifelse(percentage >= 0.5 & percentage < 0.75, "Good","Very Good")),
+                    label_1 = paste0(percentage*100, "%"),
+                    label_2 = group,
                     title = wrap_35(variable))
-ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
-  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1), fill ="#faf9eb") +
-  geom_rect() + 
-  coord_polar(theta = "y",start=-pi/2) + xlim(c(0, 2)) + ylim(c(0,2)) +
-  geom_text(aes(x = 0, y = 0, label = label, colour=group), size=6.5) +
-  geom_text(aes(x=1.5, y=1.5, label=title), size=4.2) + 
+
+summary_data <- c("Workforce Educational Efforts",
+                  round(abs(cohort_data - hospital_data), 3),
+                  ifelse(hospital_data - cohort_data < 0, "Worse", "Better"),
+                  NA)
+
+summary_stats <- summary_stats %>%
+  rbind(summary_data, make.row.names = F)
+
+df %>%
+  ggplot() +
+  geom_rect(aes(ymax=1, ymin=0, xmax=2, xmin=1),
+            fill ="#faf9eb", color = 'grey') +
+  geom_rect(aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
+  coord_polar(theta = "y",
+              start = -pi/2) +
+  xlim(c(0, 2)) +
+  ylim(c(0,2)) +
+  geom_text(aes(x = 0, y = 0, label = label_1, color = group),
+            size = 6.5,
+            vjust = -.5,
+            nudge_y = .5) +
+  # geom_text(aes(x = 0, y = 0, label = label_2),
+  #           size=5.5,
+  #           vjust = 1.5) +
+  geom_text(aes(x=1.5, y=1.5, label = title),
+            size=4.2) +
   facet_wrap(~title, ncol = 2) +
   theme_void() +
-  scale_fill_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
-  scale_colour_manual(values = c("red"="#AE6180", "yellow"="#FFC842", "green"="#6BAB8A")) +
+  scale_fill_manual(values = c("Very Good"="#1E5E87", "Good"="#1E5E87", "Fair"="#1E5E87")) +
+  scale_colour_manual(values = c("Very Good"="#1E5E87", "Good"="#1E5E87", "Fair"="#1E5E87")) +
   theme(strip.background = element_blank(),
         strip.text.x = element_blank()) +
   guides(fill=FALSE) +
@@ -1184,7 +1298,414 @@ ggplot(df, aes(fill = group, ymax = percentage, ymin = 0, xmax = 2, xmin = 1)) +
 ```
 
 
+**Nurses’ Views on the Availability of Specialized Resources for Older Adults**
 
----------------------------------
+These graphs illustrate nurses’ views on the availability of specialized equipment and professional expertise to support age-friendly care.
+
+*(Note: These questions assess nurses' perceptions regarding barriers and the lack of specialized resources to care for older adults. For this diagram, higher levels of disagreement reflect nurses' perceptions that the organization values and supports care for older adults.)*
+
+```{r resource_avail_dataframe, fig.width=13, fig.asp = 1}
+cols <- c("Disagree" = "#1E5E87",
+          "Neither Agree nor Disagree" = "#A3A9AC",
+          "Agree" = "#57068c")
+
+df_cohort <- giap %>%
+  select(Q8_1, Q8_2, Q8_5, Q8_11, Q8_12) %>%
+  gather(Item, Response) %>%
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Agree"),
+         Response = ordered(Response, levels = rev(c("Disagree",
+                                                     "Neither Agree nor Disagree",
+                                                     "Agree"))),
+         Item = case_when(Item == "Q8_1" ~ "Lack of knowledge about care of older adults",
+                          Item == "Q8_2" ~ "Lack of (or inadequate) written policies and procedures specific to the older adult population",
+                          Item == "Q8_5" ~ "Lack of specialized services for the older adult",
+                          Item == "Q8_11" ~ "Communication difficulties with older adults and their families",
+                          Item == "Q8_12" ~ "Confusion over who is the appropriate decision maker for the older adult"),
+         Item = wrap_60(Item)) %>%
+  group_by(Item, Response) %>% 
+  summarize(n = sum(n)) %>% 
+  ungroup() %>% 
+  group_by(Item) %>% 
+  mutate(Percent = round(n / sum(n) * 100),
+         label = ifelse(Response == "Agree", paste0(Percent, "%"), NA)) %>%
+  ungroup() %>%
+  mutate(Level = "Cohort")
+
+df_hospital <- giap %>% 
+  filter(Hospital.Name == name) %>% 
+  select(Q8_1, Q8_2, Q8_5, Q8_11, Q8_12) %>%
+  gather(Item, Response) %>%
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Agree"),
+         Response = ordered(Response, levels = rev(c("Disagree",
+                                                     "Neither Agree nor Disagree",
+                                                     "Agree"))),
+         Item = case_when(Item == "Q8_1" ~ "Lack of knowledge about care of older adults",
+                          Item == "Q8_2" ~ "Lack of (or inadequate) written policies and procedures specific to the older adult population",
+                          Item == "Q8_5" ~ "Lack of specialized services for the older adult",
+                          Item == "Q8_11" ~ "Communication difficulties with older adults and their families",
+                          Item == "Q8_12" ~ "Confusion over who is the appropriate decision maker for the older adult"),
+         Item = wrap_60(Item)) %>%
+  group_by(Item, Response) %>% 
+  summarize(n = sum(n)) %>% 
+  ungroup() %>% 
+  group_by(Item) %>% 
+  mutate(Percent = round(n / sum(n) * 100),
+         label = ifelse(Response == "Agree", paste0(Percent, "%"), NA)) %>%
+  ungroup() %>%
+  mutate(Level = wrap_35(name))
+
+df_both <- df_hospital %>% 
+  rbind(df_cohort)
+
+cohort_data <- df_cohort %>% 
+  filter(Response == "Agree") %>% 
+  summarise(Performance = mean(Percent)/100) %>% as.numeric()
+
+hospital_data <- df_hospital %>% 
+  filter(Response == "Agree") %>% 
+  summarise(Performance = mean(Percent)/100) %>% as.numeric()
+
+summary_data <- c("Availability of Specialized Resources ",
+                  round(abs(cohort_data - hospital_data), 3),
+                  ifelse(hospital_data - cohort_data < 0, "Worse", "Better"),
+                  NA)
+
+summary_stats <- summary_stats %>%
+  rbind(summary_data, make.row.names = F)
+```
+
+```{r resouce_avail_plot}
+item.graph(df_both)
+```
+
+
+**Nurses' Views on Age-Friendly Care Planning**
+
+These diagrams  illustrate nurses’ views on how their work is organized to take the unique physical, emotional and psychological needs of older adults into account. 
+
+
+```{r age_friendly_care_dataframe, fig.width=13, fig.asp = 1}
+cols <- c("Disagree" = "#1E5E87",
+          "Neither Agree nor Disagree" = "#A3A9AC",
+          "Agree" = "#57068c")
+
+df_cohort <- giap %>%
+  select(Q7_1, Q7_2, Q7_5, Q7_7, Q7_11, Q7_13) %>%
+  gather(Item, Response) %>%
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Agree"),
+         Response = ordered(Response, levels = rev(c("Disagree",
+                                                     "Neither Agree nor Disagree",
+                                                     "Agree"))),
+         Item = case_when(Item == "Q7_1" ~ "Staff provide individualized, person-centered care",
+                          Item == "Q7_2" ~ "Older adults get the care they need ",
+                          Item == "Q7_5" ~ "Staff are familiar with how aging affects treatment responses",
+                          Item == "Q7_7" ~ "Aging is considered as a factor when planning and evaluating care",
+                          Item == "Q7_11" ~ "Staff receive information about the older adult's pre-hospitalization baseline",
+                          Item == "Q7_13" ~ "There is continuity of care across settings"),
+         Item = wrap_60(Item)) %>%
+  group_by(Item, Response) %>% 
+  summarize(n = sum(n)) %>% 
+  ungroup() %>% 
+  group_by(Item) %>% 
+  mutate(Percent = round(n / sum(n) * 100),
+         label = ifelse(Response == "Agree", paste0(Percent, "%"), NA)) %>%
+  ungroup() %>%
+  mutate(Level = "Cohort")
+
+df_hospital <- giap %>% 
+  filter(Hospital.Name == name) %>% 
+  select(Q7_1, Q7_2, Q7_5, Q7_7, Q7_11, Q7_13) %>%
+  gather(Item, Response) %>%
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Agree"),
+         Response = ordered(Response, levels = rev(c("Disagree",
+                                                     "Neither Agree nor Disagree",
+                                                     "Agree"))),
+         Item = case_when(Item == "Q7_1" ~ "Staff provide individualized, person-centered care",
+                          Item == "Q7_2" ~ "Older adults get the care they need ",
+                          Item == "Q7_5" ~ "Staff are familiar with how aging affects treatment responses",
+                          Item == "Q7_7" ~ "Aging is considered as a factor when planning and evaluating care",
+                          Item == "Q7_11" ~ "Staff receive information about the older adult's pre-hospitalization baseline",
+                          Item == "Q7_13" ~ "There is continuity of care across settings"),
+         Item = wrap_60(Item)) %>%
+  group_by(Item, Response) %>% 
+  summarize(n = sum(n)) %>% 
+  ungroup() %>% 
+  group_by(Item) %>% 
+  mutate(Percent = round(n / sum(n) * 100),
+         label = ifelse(Response == "Agree", paste0(Percent, "%"), NA)) %>%
+  ungroup() %>%
+  mutate(Level = wrap_35(name))
+
+
+df_both <- df_hospital %>% 
+  rbind(df_cohort)
+
+cohort_data <- df_cohort %>% 
+  filter(Response == "Agree") %>% 
+  summarise(Performance = mean(Percent)/100) %>% as.numeric()
+
+hospital_data <- df_hospital %>% 
+  filter(Response == "Agree") %>% 
+  summarise(Performance = mean(Percent)/100) %>% as.numeric()
+
+summary_data <- c("Age Friendly Care Planning",
+                  round(abs(cohort_data - hospital_data), 3),
+                  ifelse(hospital_data - cohort_data < 0, "Worse", "Better"),
+                  NA)
+
+summary_stats <- summary_stats %>%
+  rbind(summary_data, make.row.names = F)
+```
+
+```{r age_friendly_care_plot}
+item.graph(df_both, cols = cols)
+```
+
+
+**Organizational Values to Support Age-Sensitive Care**
+
+The following diagram illustrates nurses' perceptions regarding organizational values to provide nursing care tailored to the unique needs of older adults.
+
+```{r org_values_dataframe, fig.width=13, fig.asp = 1}
+cols <- c("Disagree" = "#1E5E87",
+          "Neither Agree nor Disagree" = "#A3A9AC",
+          "Agree" = "#57068c")
+
+df_cohort <- giap %>%
+  select(Q7_19, Q7_20, Q7_21, Q7_23, Q7_17) %>%
+  gather(Item, Response) %>%
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Agree"),
+         Response = ordered(Response, levels = rev(c("Disagree",
+                                                     "Neither Agree nor Disagree",
+                                                     "Agree"))),
+         Item = case_when(Item == "Q7_19" ~ "Clinicians-administrators work together",
+                          Item == "Q7_20" ~ "Disagreeing with supervisor is acceptable regarding caret",
+                          Item == "Q7_21" ~ "Staff have input determining policy",
+                          Item == "Q7_23" ~ "Staff know how to communicate with older adults with dementia",
+                          Item == "Q7_17" ~ "Colleagues value my opinion about proper care of older adult patients"),
+         Item = wrap_60(Item)) %>%
+  group_by(Item, Response) %>% 
+  summarize(n = sum(n)) %>% 
+  ungroup() %>% 
+  group_by(Item) %>% 
+  mutate(Percent = round(n / sum(n) * 100),
+         label = ifelse(Response == "Agree", paste0(Percent, "%"), NA)) %>%
+  ungroup() %>%
+  mutate(Level = "Cohort")
+
+df_hospital <- giap %>% 
+  filter(Hospital.Name == name) %>% 
+  select(Q7_19, Q7_20, Q7_21, Q7_23, Q7_17) %>%
+  gather(Item, Response) %>%
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Agree"),
+         Response = ordered(Response, levels = rev(c("Disagree",
+                                                     "Neither Agree nor Disagree",
+                                                     "Agree"))),
+         Item = case_when(Item == "Q7_19" ~ "Clinicians-administrators work together",
+                          Item == "Q7_20" ~ "Disagreeing with supervisor is acceptable regarding caret",
+                          Item == "Q7_21" ~ "Staff have input determining policy",
+                          Item == "Q7_23" ~ "Staff know how to communicate with older adults with dementia",
+                          Item == "Q7_17" ~ "Colleagues value my opinion about proper care of older adult patients"),
+         Item = wrap_60(Item)) %>%
+  group_by(Item, Response) %>% 
+  summarize(n = sum(n)) %>% 
+  ungroup() %>% 
+  group_by(Item) %>% 
+  mutate(Percent = round(n / sum(n) * 100),
+         label = ifelse(Response == "Agree", paste0(Percent, "%"), NA)) %>%
+  ungroup() %>%
+  mutate(Level = wrap_35(name))
+
+df_both <- df_hospital %>% 
+  rbind(df_cohort)
+
+cohort_data <- df_cohort %>% 
+  filter(Response == "Agree") %>% 
+  summarise(Performance = mean(Percent)/100) %>% as.numeric()
+
+hospital_data <- df_hospital %>% 
+  filter(Response == "Agree") %>% 
+  summarise(Performance = mean(Percent)/100) %>% as.numeric()
+
+summary_data <- c("Organizational Values",
+                  round(abs(cohort_data - hospital_data), 3),
+                  ifelse(hospital_data - cohort_data < 0, "Worse", "Better"),
+                  NA)
+
+summary_stats <- summary_stats %>%
+  rbind(summary_data, make.row.names = F)
+```
+
+```{r org_values_plot}
+item.graph(df_both)
+```
+
+
+**Unit Environment to Support Improvements in the Care of Older Adults**
+
+The following diagram illustrates nurses' perceptions regarding the priority that nurse mangers and clinical leaders place on improving care for older adults.
+
+```{r unit_env_dataframe, fig.width=13, fig.asp = 1}
+cols <- c("Disagree" = "#1E5E87",
+          "Neither Agree nor Disagree" = "#A3A9AC",
+          "Agree" = "#57068c")
+
+df_cohort <- giap %>%
+  select(Q7_26, Q7_27, Q7_28, Q7_29, Q7_30) %>%
+  gather(Item, Response) %>%
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Agree"),
+         Response = ordered(Response, levels = rev(c("Disagree",
+                                                     "Neither Agree nor Disagree",
+                                                     "Agree"))),
+         Item = case_when(Item == "Q7_26" ~ "The time required to manage common nursing problems experienced by older adults is factored into staff assignments",
+                          Item == "Q7_27" ~ "Training is readily available to staff that want to learn more about the care of older adults",
+                          Item == "Q7_28" ~ "Staff are encouraged to take time off from their regular work tasks to implement new care practices",
+                          Item == "Q7_29" ~ "The nurse administrators (unit managers, supervisors, senior leaders) take an active interest in improving care for older adults",
+                          Item == "Q7_30" ~ "Care of the older adult is a priority on my unit"),
+         Item = wrap_60(Item)) %>%
+  group_by(Item, Response) %>% 
+  summarize(n = sum(n)) %>% 
+  ungroup() %>% 
+  group_by(Item) %>% 
+  mutate(Percent = round(n / sum(n) * 100),
+         label = ifelse(Response == "Agree", paste0(Percent, "%"), NA)) %>%
+  ungroup() %>%
+  mutate(Level = "Cohort")
+
+df_hospital <- giap %>% 
+  filter(Hospital.Name == name) %>% 
+  select(Q7_26, Q7_27, Q7_28, Q7_29, Q7_30) %>%
+  gather(Item, Response) %>%
+  count(Item, Response) %>%
+  filter(!is.na(Response), Response != 9) %>%
+  mutate(Response = case_when(Response == 1 ~ "Disagree",
+                              Response == 2 ~ "Disagree",
+                              Response == 3 ~ "Neither Agree nor Disagree",
+                              Response == 4 ~ "Agree",
+                              Response == 5 ~ "Agree"),
+         Response = ordered(Response, levels = rev(c("Disagree",
+                                                     "Neither Agree nor Disagree",
+                                                     "Agree"))),
+         Item = case_when(Item == "Q7_26" ~ "The time required to manage common nursing problems experienced by older adults is factored into staff assignments",
+                          Item == "Q7_27" ~ "Training is readily available to staff that want to learn more about the care of older adults",
+                          Item == "Q7_28" ~ "Staff are encouraged to take time off from their regular work tasks to implement new care practices",
+                          Item == "Q7_29" ~ "The nurse administrators (unit managers, supervisors, senior leaders) take an active interest in improving care for older adults",
+                          Item == "Q7_30" ~ "Care of the older adult is a priority on my unit"),
+         Item = wrap_60(Item)) %>%
+  group_by(Item, Response) %>% 
+  summarize(n = sum(n)) %>% 
+  ungroup() %>% 
+  group_by(Item) %>% 
+  mutate(Percent = round(n / sum(n) * 100),
+         label = ifelse(Response == "Agree", paste0(Percent, "%"), NA)) %>%
+  ungroup() %>%
+  mutate(Level = wrap_35(name))
+
+df_both <- df_hospital %>% 
+  rbind(df_cohort)
+
+cohort_data <- df_cohort %>% 
+  filter(Response == "Agree") %>% 
+  summarise(Performance = mean(Percent)/100) %>% as.numeric()
+
+hospital_data <- df_hospital %>% 
+  filter(Response == "Agree") %>% 
+  summarise(Performance = mean(Percent)/100) %>% as.numeric()
+
+summary_data <- c("Unit Environment",
+                  round(abs(cohort_data - hospital_data), 3),
+                  ifelse(hospital_data - cohort_data < 0, "Worse", "Better"),
+                  NA)
+
+summary_stats <- summary_stats %>%
+  rbind(summary_data, make.row.names = F)
+```
+
+```{r unit_env_plot}
+item.graph(df_both)
+```
+
+### **GIAP Results Summary**
+
+The results of your hospital’s GIAP survey are summarized below. The results are compared to the group of hospitals that participated in the survey in the same cohort.
+
+```{r}
+summary_stats %>% 
+  rename(" " = "Section") %>% 
+  dplyr::mutate(Performance = paste0(as.numeric(Performance)*100,'%'),
+                Performance = kableExtra::cell_spec(Performance, "html", 
+                                                    color = "white", 
+                                                    align = "c",
+                                                    background = ifelse(summary_stats$Favorable == "Better", "#6BAB8A", "#AE6180"))) %>% 
+  dplyr::select(-Favorable, -Group) %>% 
+  kable(escape=F) %>%
+  kable_styling("striped", full_width = F) %>%
+  pack_rows("Knowledge", 3, 13) %>%
+  pack_rows("Practice Environment", 14, 18)
+```
+
+### **Suggested Resources**
+
+To support the development of the NICHE program on the designated nursing units at your hospital, we recommend that you consult the following resources to guide your work.
+
+1. **NICHE Implementation Rubric** Refer to the NICHE implementation rubric to guide organizational development efforts to promote age-friendly care for older adults.   The NICHE implementation rubric outlines nursing governance systems and structures that support a robust NICHE program.  The rubric summarizes activities to guide program development for early, progressive, senior-friendly and exemplar member programs.   The rubric is available in the NICHE Knowledge Center. 
+
+2.  **Nurses Improving Care for Healthsystems Elders (2019)** textbook edited by Terry Fulmer, Kimberly Glassman, Sherry Greenberg, Perri Rosenfeld, Mattia Gilmartin, and Mathy Mezey is the official guidebook written by leading NICHE faculty and long-time program members.   This easy to use text outlines strategies to implement the NICHE practice model and evaluate changes in the quality of care for older adults.   New members receive copies of the text as part of the Leadership Training Program.   Additional copies of the text are available for purchase from Springer Publishing.  
+
+3. **Evidence- Based Geriatric Nursing Protocols for Best Practice, 6th edition (2020)** textbook, edited by Marie Boltz, Elizabeth Capezuti, DeAnn Zwicker, and Terry Fulmer. This comprehensive text is the “bible” of geriatric nursing practice. NICHE members implement the protocols outlined in this text to standardize practice, promote clinical effectiveness, and the appropriate use of resources to manage the care of older adults.  New members receive copies of the text as part of the Leadership Training Program. Additional copies of the text are available for purchase from Springer Publishing.
+
+4.  **NICHE Pocket Card Clinical Assessment Tools and the Hartford Institute for Geriatric Nursing** *Try This Series*  A comprehensive set of easy to use clinical practice tools to guide nursing assessment, care planning and quality improvement activities. The Pocket Card Series is available in the NICHE Knowledge Center.  The Try this Series® assessment handouts are available in the NICHE Geriatric Resource Learning Path in the NICHE Knowledge Center and on the NYU Rory Meyers College of Nursing’s Hartford Institute for Geriatric Nursing webpage https://hign.org/
+
+5. **Leadership Training Program Action Plan** New NICHE members work with expert faculty and mentors to assess organizational capacity to deliver age-friendly care for older adults. During the year-long Leadership Training Program, clinical leaders create an action plan focusing on two clinical quality outcome measures. The LTP Action plan serves as the blueprint to implement the NICHE practice model during the first twelve to twenty-four months in the program.  
+
+6. **NICHE Curriculum Guide and Course Catalogue** The NICHE program catalog includes course titles, contact hours and estimated course completion times. This useful handout supports NICHE coordinators and nurse educators to create continuing professional education plans to establish a GRN and GPCA/CNA program on participating nursing units.
+
+7. **Return of Investment (ROI) Calculator**  The NICHE ROI calculator is based on the Nurses in Staff Development competency framework. The programmed excel spreadsheet enables NICHE coordinators to capture investments in clinical education and cost savings attributed to NICHE program practice changes. The ROI calculator is available in the NICHE Knowledge Center.  
+
+
+
+
   
   
