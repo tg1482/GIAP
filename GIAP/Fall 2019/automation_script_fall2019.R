@@ -58,7 +58,6 @@ two_to_zero <- function(val){
 # Automating report generation across all hospitals
 
 cohort <- "Fall 2019"
-name <- "University of Virginia Medical Center"
 num_hospitals <- length(unique(giap$Hospital.ID))
 eligible_nurses <- 1903
 responded_nurses <- nrow(giap)

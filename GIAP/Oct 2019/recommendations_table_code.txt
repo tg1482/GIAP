@@ -1,0 +1,20 @@
+<style type="text/css">
+.tg  {border-collapse:collapse;border-color:#9ABAD9;border-spacing:0;}
+.tg td{background-color:#EBF5FF;border-color:#9ABAD9;border-style:solid;border-width:1px;color:#444;
+  font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{background-color:#409cff;border-color:#9ABAD9;border-style:solid;border-width:1px;color:#fff;
+  font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-r0kq{border-color:inherit;font-family:Verdana, Geneva, sans-serif !important;;text-align:left;vertical-align:top}
+</style>
+<table class="tg">
+  <tr>
+    <th class="tg-r0kq"><span style="font-weight:bold">Staff Knowledge and Attitudes </span></th>
+    <th class="tg-r0kq"><span style="font-weight:bold">Specialized Resources, Care Planning, and Age-Friendly Environment </span></th>
+    <th class="tg-r0kq"><span style="font-weight:bold">Unit Readiness to Become Age-Friendly </span></th>
+  </tr>
+  <tr>
+    <td class="tg-r0kq">1. Offer the Introduction to Gerontology module to all staff to promote knowledge about aging<br><br>2. Schedule staff to complete the GRN and GPCA programs within 60 to 90 days to retain knowledge and apply information to practice<br><br>3. Compare GIAP results with other quality data to understand practice patterns<br><br>4. Align staff education plans with quality improvement goals<br><br>5. Provide clinical coaching and opportunities for staff to apply new knowledge to clinical situations<br><br>6. Review Knowledge Center reports tracking course completion rates and the mastery of geriatric nursing concepts.   </td>
+    <td class="tg-r0kq">1. Communicate the availability of specialized resources to all staff using multiple methods<br><br>2. Identify barriers that keep the staff from consistently using specialty resources <br><br>3. Use the NICHE Protocols, Need to Knows, Pocket Card assessment tools to guide practice including  nursing policies and procedures<br><br>4. Review current policies, procedures, data collection tools focused on the care of older adults. Collect data on older adults segmented into age-groups to focus on quality improvement goals   </td>
+    <td class="tg-r0kq">1. Schedule a specific time to work on quality improvement projects <br><br>2. Offer clinical coaching to staff to reinforce practice changes <br><br>3. Communicate and discuss the value of age-friendly care with all staff members<br><br>4. Create recognition programs to celebrate nurses’ contributions to quality and the achievement of specific quality goals <br><br>5. Work with staff to understand potential barriers and creative ideas to improve care for older adults <br><br>6. Run Plan-Do-Study-Act (PDSA) cycles to adopt evidence-based practices on<br>participating units  </td>
+  </tr>
+</table>

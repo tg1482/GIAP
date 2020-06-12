@@ -1311,7 +1311,7 @@ cols <- c("Disagree" = "#1E5E87",
 
 df_cohort <- giap %>%
   select(Q8_1, Q8_2, Q8_5, Q8_11, Q8_12) %>%
-  gather(Item, Response) %>%
+  tidyr::gather(Item, Response) %>%
   count(Item, Response) %>%
   filter(!is.na(Response), Response != 9) %>%
   mutate(Response = case_when(Response == 1 ~ "Disagree",
@@ -1340,7 +1340,7 @@ df_cohort <- giap %>%
 df_hospital <- giap %>% 
   filter(Hospital.Name == name) %>% 
   select(Q8_1, Q8_2, Q8_5, Q8_11, Q8_12) %>%
-  gather(Item, Response) %>%
+  tidyr::gather(Item, Response) %>%
   count(Item, Response) %>%
   filter(!is.na(Response), Response != 9) %>%
   mutate(Response = case_when(Response == 1 ~ "Disagree",
