@@ -14,7 +14,7 @@ Through the years we have iterated through various versions of GIAP reports. `\P
 
 The project is mostly written in R and has a few elements of HTML and Markdown for aesthetic tuning. 
 
-This repo contains a folder for each Cohort that the GIAP project has been active. Each folder contains `generate_report.R` that should be run to generate the reports. They use data in the `\data` folder and save the reports in `\report` folder. Extra features such as pictures and tables will be saved in corresponding folders `pics` and `tables`. 
+This repo contains a folder for each Cohort that the GIAP project has been active. Each folder contains `generate_report.R` that should be run to generate the reports. They use data in the `\data` folder and save the reports in `\report` folder. Extra features such as pictures and tables will be saved in corresponding folders `\pics` and `\tables`. 
 
 ## Acknowledgments
 
