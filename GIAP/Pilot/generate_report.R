@@ -1,8 +1,8 @@
 library(pacman)
-p_load(tidyverse, ggplot2, pander, knitr, scales, data.table, lubridate, readxl, kableExtra, rmarkdown, knitcitations)
+p_load(dplyr, ggplot2, pander, knitr, scales, lubridate, readxl, kableExtra, rmarkdown, knitcitations)
 
-giap <- read_excel("Complete Raw Data CMC.xlsx")
-arost <- read_excel("Master List of Variables.xlsx", sheet = "Participating - full rosters")
+giap <- read_excel("Desktop/NICHE/GIAP/Pilot/Complete Raw Data CMC.xlsx")
+arost <- read_excel("Desktop/NICHE/GIAP/Pilot/Master List of Variables.xlsx", sheet = "Participating - full rosters")
 
 giap <- giap %>% 
   mutate(StartDate = as_date(StartDate),
@@ -58,19 +58,11 @@ giap <- giap %>%
 
 hospital.names <- unique(giap$Hospital.Name) %>% na.omit()
 
-knowledge <- read.csv("knowledge_answers.csv")
-knowledge$select <- c(1,2)
-knowledge <- knowledge %>% filter(select == 1) %>% select(-select)
-
-knowledge$Code<- gsub(pattern = "-", replacement = "_", 
-                      gsub(pattern = " ", replacement = "", 
-                           gsub(pattern = " –", replacement = "", 
-                                substr(knowledge$Question, 11,16))))
+knowledge <- read.csv("Desktop/NICHE/GIAP/Pilot/knowledge_answers.csv")
 
 knowledge$Answers <- strsplit(as.character(knowledge$Answer), "/")
 
 knowledge <- knowledge %>% select(Code, Type, Answers)
-
 
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
